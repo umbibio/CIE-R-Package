@@ -1,0 +1,111 @@
+HGNC ID	Approved Symbol	Approved Name	Status	Previous Symbols	Synonyms	Chromosome	Accession Numbers	RefSeq IDs	Gene Family Tag	Gene family description	Gene family ID
+348	AHR	aryl hydrocarbon receptor	Approved		bHLHe76	7p21.1	L19872	NM_001621	BHLH	Basic helix-loop-helix proteins	420
+346	AHRR	aryl-hydrocarbon receptor repressor	Approved	AHH, AHHR	KIAA1234, bHLHe77	5p15.33	AB033060	NM_020731	BHLH	Basic helix-loop-helix proteins	420
+700	ARNT	aryl hydrocarbon receptor nuclear translocator	Approved		HIF-1beta, bHLHe2	1q21.3	AF001307		BHLH	Basic helix-loop-helix proteins	420
+16876	ARNT2	aryl hydrocarbon receptor nuclear translocator 2	Approved		KIAA0307, bHLHe1	15q25.1	AB002305		BHLH	Basic helix-loop-helix proteins	420
+701	ARNTL	aryl hydrocarbon receptor nuclear translocator like	Approved		MOP3, JAP3, BMAL1, PASD3, bHLHe5	11p15.3	D89722	NM_001178	BHLH	Basic helix-loop-helix proteins	420
+18984	ARNTL2	aryl hydrocarbon receptor nuclear translocator like 2	Approved		BMAL2, MOP9, CLIF, PASD9, bHLHe6	12p11.23	AF246961	NM_020183	BHLH	Basic helix-loop-helix proteins	420
+738	ASCL1	achaete-scute family bHLH transcription factor 1	Approved		ASH1, HASH1, bHLHa46	12q23.2	L08424		BHLH	Basic helix-loop-helix proteins	420
+739	ASCL2	achaete-scute family bHLH transcription factor 2	Approved		ASH2, HASH2, bHLHa45	11p15.5		NM_005170	BHLH	Basic helix-loop-helix proteins	420
+740	ASCL3	achaete-scute family bHLH transcription factor 3	Approved		bHLHa42, HASH3, Sgn1	11p15.4	AJ400877		BHLH	Basic helix-loop-helix proteins	420
+24311	ASCL4	achaete-scute family bHLH transcription factor 4	Approved		HASH4, bHLHa44	12q23.3	AY238895	NM_203436	BHLH	Basic helix-loop-helix proteins	420
+33169	ASCL5	achaete-scute family bHLH transcription factor 5	Approved		bHLHa47	1q32.1		NM_001270601	BHLH	Basic helix-loop-helix proteins	420
+797	ATOH1	atonal bHLH transcription factor 1	Approved		HATH1, MATH-1, Math1, bHLHa14	4q22.2	U61148	NM_005172	BHLH	Basic helix-loop-helix proteins	420
+13907	ATOH7	atonal bHLH transcription factor 7	Approved		Math5, bHLHa13	10q21.3	AF418922		BHLH	Basic helix-loop-helix proteins	420
+24126	ATOH8	atonal bHLH transcription factor 8	Approved		HATH6, FLJ14708, bHLHa21	2p11.2	AK074681	NM_032827	BHLH	Basic helix-loop-helix proteins	420
+22265	BHLHA15	basic helix-loop-helix family member a15	Approved	BHLHB8	MIST1, bHLHa15	7q21.3	BK000276	NM_177455	BHLH	Basic helix-loop-helix proteins	420
+35126	BHLHA9	basic helix-loop-helix family member a9	Approved		bHLHa9, BHLHF42	17p13.3		NM_001164405	BHLH	Basic helix-loop-helix proteins	420
+29353	BHLHB9	basic helix-loop-helix family member b9	Approved		p60TRP, KIAA1701, GASP3	Xq22.1	AB051488	NM_030639	BHLH	Basic helix-loop-helix proteins	420
+11963	BHLHE22	basic helix-loop-helix family member e22	Approved	TNRC20, BHLHB5	CAGL85, Beta3, bHLHe22	8q12.3	U80755	NM_152414	BHLH	Basic helix-loop-helix proteins	420
+16093	BHLHE23	basic helix-loop-helix family member e23	Approved	BHLHB4	bA305P22.3, Beta4, bHLHe23	20q13.33	AL121673	NM_080606	BHLH	Basic helix-loop-helix proteins	420
+1046	BHLHE40	basic helix-loop-helix family member e40	Approved	STRA13, BHLHB2	DEC1, bHLHe40, SHARP2, Clast5	3p26.1	AB004066	NM_003670	BHLH	Basic helix-loop-helix proteins	420
+16617	BHLHE41	basic helix-loop-helix family member e41	Approved	BHLHB3	DEC2, SHARP-1, SHARP1, bHLHe41	12p12.1	AB044088	NM_030762	BHLH	Basic helix-loop-helix proteins	420
+2082	CLOCK	clock circadian regulator	Approved		KIAA0334, KAT13D, bHLHe8	4q12	AF011568	NM_004898	BHLH	Basic helix-loop-helix proteins	420
+3374	EPAS1	endothelial PAS domain protein 1	Approved		MOP2, PASD2, HIF2A, HLF, bHLHe73	2p21	U81984	NM_001430	BHLH	Basic helix-loop-helix proteins	420
+16660	FERD3L	Fer3 like bHLH transcription factor	Approved		NATO3, N-TWIST, bHLHa31	7p21.1	AF369897		BHLH	Basic helix-loop-helix proteins	420
+24669	FIGLA	folliculogenesis specific bHLH transcription factor	Approved		bHLHc8	2p13.3	BC039536	NM_001004311	BHLH	Basic helix-loop-helix proteins	420
+4807	HAND1	heart and neural crest derivatives expressed 1	Approved		eHand, Thing1, Hxt, bHLHa27	5q33.2	AF061756	NM_004821	BHLH	Basic helix-loop-helix proteins	420
+4808	HAND2	heart and neural crest derivatives expressed 2	Approved		dHand, Thing2, Hed, bHLHa26	4q34.1	AF087941		BHLH	Basic helix-loop-helix proteins	420
+33783	HELT	helt bHLH transcription factor	Approved		HESL, HCM1228, Mgn, bHLHb44, MEGANE	4q35.1	BC144567	NM_001300781	BHLH	Basic helix-loop-helix proteins	420
+5192	HES1	hes family bHLH transcription factor 1	Approved	HRY	FLJ20408, HES-1, Hes1, bHLHb39	3q29	L19314		BHLH	Basic helix-loop-helix proteins	420
+16005	HES2	hes family bHLH transcription factor 2	Approved		bHLHb40	1p36.31	AL031848	NM_019089	BHLH	Basic helix-loop-helix proteins	420
+26226	HES3	hes family bHLH transcription factor 3	Approved		bHLHb43	1p36.31		NM_001024598	BHLH	Basic helix-loop-helix proteins	420
+24149	HES4	hes family bHLH transcription factor 4	Approved		bHLHb42	1p36.33	BC012351	NM_021170	BHLH	Basic helix-loop-helix proteins	420
+19764	HES5	hes family bHLH transcription factor 5	Approved		bHLHb38	1p36.32	AL139246		BHLH	Basic helix-loop-helix proteins	420
+18254	HES6	hes family bHLH transcription factor 6	Approved		bHLHb41	2q37.3	AB035179	NM_018645	BHLH	Basic helix-loop-helix proteins	420
+15977	HES7	hes family bHLH transcription factor 7	Approved		bHLHb37	17p13.1	AB049064	NM_032580	BHLH	Basic helix-loop-helix proteins	420
+4880	HEY1	hes related family bHLH transcription factor with YRPW motif 1	Approved		HESR-1, CHF2, HESR1, HRT-1, CHF-2, HERP2, bHLHb31	8q21.13	AF151522	NM_012258	BHLH	Basic helix-loop-helix proteins	420
+4881	HEY2	hes related family bHLH transcription factor with YRPW motif 2	Approved		bHLHb32, HERP1, HESR2	6q22.31	AJ249545		BHLH	Basic helix-loop-helix proteins	420
+4882	HEYL	hes related family bHLH transcription factor with YRPW motif-like	Approved		bHLHb33, HEY3, HESR3	1p34.2	BC006087	NM_014571	BHLH	Basic helix-loop-helix proteins	420
+4910	HIF1A	hypoxia inducible factor 1 subunit alpha	Approved		MOP1, HIF-1alpha, PASD8, HIF1, bHLHe78	14q23.2	U22431	NM_001530	BHLH	Basic helix-loop-helix proteins	420
+15825	HIF3A	hypoxia inducible factor 3 subunit alpha	Approved		IPAS, MOP7, PASD7, bHLHe17	19q13.32	AK027725		BHLH	Basic helix-loop-helix proteins	420
+5360	ID1	inhibitor of DNA binding 1, HLH protein	Approved		dJ857M17.1.2, bHLHb24	20q11.21		NM_002165	BHLH	Basic helix-loop-helix proteins	420
+5361	ID2	inhibitor of DNA binding 2	Approved		GIG8, bHLHb26	2p25.1		NM_002166	BHLH	Basic helix-loop-helix proteins	420
+5362	ID3	inhibitor of DNA binding 3, HLH protein	Approved		HEIR-1, bHLHb25	1p36.12	X69111	NM_002167	BHLH	Basic helix-loop-helix proteins	420
+5363	ID4	inhibitor of DNA binding 4, HLH protein	Approved		bHLHb27	6p22.3	U16153	NM_001546	BHLH	Basic helix-loop-helix proteins	420
+6734	LYL1	LYL1, basic helix-loop-helix family member	Approved		bHLHa18	19p13.13		NM_005583	BHLH	Basic helix-loop-helix proteins	420
+6913	MAX	MYC associated factor X	Approved		bHLHd4, bHLHd5, bHLHd6, bHLHd7, bHLHd8	14q23.3		NM_197957	BHLH	Basic helix-loop-helix proteins	420
+29658	MESP1	mesoderm posterior bHLH transcription factor 1	Approved		MGC10676, bHLHc5	15q26.1		NM_018670	BHLH	Basic helix-loop-helix proteins	420
+29659	MESP2	mesoderm posterior bHLH transcription factor 2	Approved		SCDO2, bHLHc6	15q26.1		XM_085261	BHLH	Basic helix-loop-helix proteins	420
+7105	MITF	melanogenesis associated transcription factor	Approved	WS2A, WS2	MI, bHLHe32	3p13		NM_198159	BHLH	Basic helix-loop-helix proteins	420
+11645	MLX	MLX, MAX dimerization protein	Approved	TCFL4	MAD7, MXD7, bHLHd13	17q21.1	AF213668	NM_170607	BHLH	Basic helix-loop-helix proteins	420
+17055	MLXIP	MLX interacting protein	Approved		MONDOA, KIAA0867, MIR, bHLHe36	12q21.31	AB020674	NM_014938	BHLH	Basic helix-loop-helix proteins	420
+12744	MLXIPL	MLX interacting protein like	Approved	WBSCR14	WS-bHLH, MIO, CHREBP, MONDOB, bHLHd14	7q11.23	AK055029	NM_032951	BHLH	Basic helix-loop-helix proteins	420
+7188	MNT	MAX network transcriptional repressor	Approved		ROX, MXD6, MAD6, bHLHd3	17p13.3	Y13444	NM_020310	BHLH	Basic helix-loop-helix proteins	420
+7321	MSC	musculin	Approved		ABF-1, bHLHa22	8q13.3		NM_005098	BHLH	Basic helix-loop-helix proteins	420
+6761	MXD1	MAX dimerization protein 1	Approved	MAD	MAD1, bHLHc58	2p13.3		NM_002357	BHLH	Basic helix-loop-helix proteins	420
+14008	MXD3	MAX dimerization protein 3	Approved		MAD3, bHLHc13	5q35.3	BC000745		BHLH	Basic helix-loop-helix proteins	420
+13906	MXD4	MAX dimerization protein 4	Approved		MAD4, MSTP149, MST149, bHLHc12	4p16.3		NM_006454	BHLH	Basic helix-loop-helix proteins	420
+7534	MXI1	MAX interactor 1, dimerization protein	Approved		MXD2, MAD2, MXI, bHLHc11	10q25.2	BC016678	NM_130439	BHLH	Basic helix-loop-helix proteins	420
+7553	MYC	MYC proto-oncogene, bHLH transcription factor	Approved		c-Myc, bHLHe39, MYCC	8q24.21			BHLH	Basic helix-loop-helix proteins	420
+7555	MYCL	MYCL proto-oncogene, bHLH transcription factor	Approved	MYCL1	LMYC, bHLHe38	1p34.2		NM_001033082	BHLH	Basic helix-loop-helix proteins	420
+7559	MYCN	MYCN proto-oncogene, bHLH transcription factor	Approved	NMYC	bHLHe37, N-myc, MYCNOT	2p24.3	BC002712	NM_005378	BHLH	Basic helix-loop-helix proteins	420
+7565	MYF5	myogenic factor 5	Approved		bHLHc2	12q21.31		NM_005593	BHLH	Basic helix-loop-helix proteins	420
+7566	MYF6	myogenic factor 6	Approved		MRF4, bHLHc4	12q21.31		NM_002469	BHLH	Basic helix-loop-helix proteins	420
+7611	MYOD1	myogenic differentiation 1	Approved	MYF3	PUM, MYOD, bHLHc1	11p15.1	AF027148	NM_002478	BHLH	Basic helix-loop-helix proteins	420
+7612	MYOG	myogenin	Approved	MYF4	bHLHc3	1q32.1	BC053899	NM_002479	BHLH	Basic helix-loop-helix proteins	420
+7668	NCOA1	nuclear receptor coactivator 1	Approved		SRC1, F-SRC-1, NCoA-1, KAT13A, RIP160, bHLHe74	2p23.3	U40396	NM_147223	BHLH	Basic helix-loop-helix proteins	420
+7669	NCOA2	nuclear receptor coactivator 2	Approved		TIF2, GRIP1, NCoA-2, KAT13C, bHLHe75	8q13.3	X97674		BHLH	Basic helix-loop-helix proteins	420
+7670	NCOA3	nuclear receptor coactivator 3	Approved		RAC3, AIB1, ACTR, p/CIP, TRAM-1, CAGH16, TNRC16, KAT13B, bHLHe42, SRC-3, SRC3	20q13.12	AF012108	NM_006534	BHLH	Basic helix-loop-helix proteins	420
+7762	NEUROD1	neuronal differentiation 1	Approved	NEUROD	BETA2, BHF-1, NeuroD, bHLHa3, MODY6	2q31.3	U50823	NM_002500	BHLH	Basic helix-loop-helix proteins	420
+7763	NEUROD2	neuronal differentiation 2	Approved		NDRF, bHLHa1	17q12	U58681	NM_006160	BHLH	Basic helix-loop-helix proteins	420
+13802	NEUROD4	neuronal differentiation 4	Approved		Atoh3, ATH-3, MATH-3, bHLHa4	12q13.13	AF203901		BHLH	Basic helix-loop-helix proteins	420
+13804	NEUROD6	neuronal differentiation 6	Approved		Atoh2, NEX1M, Math-2, bHLHa2, Nex1	7p14.3	AF248954	NM_022728	BHLH	Basic helix-loop-helix proteins	420
+7764	NEUROG1	neurogenin 1	Approved	NEUROD3	AKA, Math4C, ngn1, bHLHa6	5q31.1	U63842	NM_006161	BHLH	Basic helix-loop-helix proteins	420
+13805	NEUROG2	neurogenin 2	Approved		Atoh4, Math4A, ngn-2, bHLHa8, NGN2	4q25	AF303002	NM_024019	BHLH	Basic helix-loop-helix proteins	420
+13806	NEUROG3	neurogenin 3	Approved		Atoh5, Math4B, ngn3, bHLHa7	10q22.1	AJ133776	NM_020999	BHLH	Basic helix-loop-helix proteins	420
+7817	NHLH1	nescient helix-loop-helix 1	Approved	HEN1	NSCL, NSCL1, bHLHa35	1q23.2	BC013789	NM_005598	BHLH	Basic helix-loop-helix proteins	420
+7818	NHLH2	nescient helix-loop-helix 2	Approved	HEN2	NSCL2, bHLHa34	1p13.1		NM_005599	BHLH	Basic helix-loop-helix proteins	420
+7894	NPAS1	neuronal PAS domain protein 1	Approved		MOP5, PASD5, bHLHe11	19q13.32	U77968	NM_002517	BHLH	Basic helix-loop-helix proteins	420
+7895	NPAS2	neuronal PAS domain protein 2	Approved		MOP4, PASD4, bHLHe9	2q11.2	U77970		BHLH	Basic helix-loop-helix proteins	420
+19311	NPAS3	neuronal PAS domain protein 3	Approved		MOP6, PASD6, bHLHe12	14q13.1	AF164438		BHLH	Basic helix-loop-helix proteins	420
+18983	NPAS4	neuronal PAS domain protein 4	Approved		PASD10, NXF, Le-PAS, bHLHe79	11q13.2	AB049469	NM_178864	BHLH	Basic helix-loop-helix proteins	420
+16983	OLIG1	oligodendrocyte transcription factor 1	Approved		BHLHB6, bHLHe21	21q22.11	AP000109	NM_138983	BHLH	Basic helix-loop-helix proteins	420
+9398	OLIG2	oligodendrocyte transcription factor 2	Approved	PRKCBP2, BHLHB1	RACK17, OLIGO2, bHLHe19	21q22.11	U48250	NM_005806	BHLH	Basic helix-loop-helix proteins	420
+18003	OLIG3	oligodendrocyte transcription factor 3	Approved		Bhlhb7, bHLHe20	6q23.3	AK096362	NM_175747	BHLH	Basic helix-loop-helix proteins	420
+23734	PTF1A	pancreas associated transcription factor 1a	Approved		PTF1-p48, bHLHa29, p48	10p12.2	BK000272	NM_178161	BHLH	Basic helix-loop-helix proteins	420
+32322	SCX	scleraxis bHLH transcription factor	Approved	SCXA, SCXB	bHLHa48, bHLHa41	8q24.3		XM_926116	BHLH	Basic helix-loop-helix proteins	420
+10882	SIM1	SIM bHLH transcription factor 1	Approved		bHLHe14	6q16.3	U70212	NM_005068	BHLH	Basic helix-loop-helix proteins	420
+10883	SIM2	SIM bHLH transcription factor 2	Approved	SIM	MGC119447, bHLHe15	21q22.13		NM_009586	BHLH	Basic helix-loop-helix proteins	420
+27845	SOHLH1	spermatogenesis and oogenesis specific basic helix-loop-helix 1	Approved	C9orf157	NOHLH, TEB2, bA100C15.3, bHLHe80, SPATA27	9q34.3	BC031861	NM_001012415	BHLH	Basic helix-loop-helix proteins	420
+26026	SOHLH2	spermatogenesis and oogenesis specific basic helix-loop-helix 2	Approved		FLJ20449, TEB1, bHLHe81, SPATA28	13q13.3	AK000456	NM_017826	BHLH	Basic helix-loop-helix proteins	420
+11289	SREBF1	sterol regulatory element binding transcription factor 1	Approved		SREBP1, bHLHd1, SREBP-1c, SREBP1a	17p11.2	BC057388	NM_004176	BHLH	Basic helix-loop-helix proteins	420
+11290	SREBF2	sterol regulatory element binding transcription factor 2	Approved		SREBP2, bHLHd2	22q13.2	U02031	NM_004599	BHLH	Basic helix-loop-helix proteins	420
+11556	TAL1	TAL bHLH transcription factor 1, erythroid differentiation factor	Approved	TCL5	SCL, bHLHa17	1p33	M29038	NM_003189	BHLH	Basic helix-loop-helix proteins	420
+11557	TAL2	TAL bHLH transcription factor 2	Approved		bHLHa19	9q31.2		NM_005421	BHLH	Basic helix-loop-helix proteins	420
+11623	TCF12	transcription factor 12	Approved		HEB, HTF4, HsT17266, bHLHb20, p64	15q21.3	BC050556	NM_003205	BHLH	Basic helix-loop-helix proteins	420
+11627	TCF15	transcription factor 15	Approved		EC2, PARAXIS, bHLHa40	20p13		NM_004609	BHLH	Basic helix-loop-helix proteins	420
+11632	TCF21	transcription factor 21	Approved		POD1, bHLHa23	6q23.2	AF047419	NM_198392	BHLH	Basic helix-loop-helix proteins	420
+18602	TCF23	transcription factor 23	Approved		OUT, bHLHa24	2p23.3	AC013403	NM_175769	BHLH	Basic helix-loop-helix proteins	420
+32275	TCF24	transcription factor 24	Approved		bHLHa25	8q13.1	BK000144	NM_001193502	BHLH	Basic helix-loop-helix proteins	420
+11633	TCF3	transcription factor 3	Approved		E2A, ITF1, MGC129647, MGC129648, bHLHb21, VDIR, E47, p75	19p13.3	M65214	NM_003200	BHLH	Basic helix-loop-helix proteins	420
+11634	TCF4	transcription factor 4	Approved		SEF2-1B, ITF2, bHLHb19, E2-2	18q21.2	M74719	NM_003199	BHLH	Basic helix-loop-helix proteins	420
+11646	TCFL5	transcription factor like 5	Approved		Figlb, E2BP-1, CHA, bHLHe82	20q13.33	AB012124	NM_006602	BHLH	Basic helix-loop-helix proteins	420
+11745	TFAP4	transcription factor AP-4	Approved		AP-4, bHLHc41	16p13.3	X57435	NM_003223	BHLH	Basic helix-loop-helix proteins	420
+11752	TFE3	transcription factor binding to IGHM enhancer 3	Approved		TFEA, bHLHe33	Xp11.23	X96717	NM_006521	BHLH	Basic helix-loop-helix proteins	420
+11753	TFEB	transcription factor EB	Approved		TCFEB, bHLHe35	6p21.1	M33782		BHLH	Basic helix-loop-helix proteins	420
+11754	TFEC	transcription factor EC	Approved		TCFEC, TFECL, bHLHe34	7q31.2	D43945	NM_012252	BHLH	Basic helix-loop-helix proteins	420
+12428	TWIST1	twist family bHLH transcription factor 1	Approved	ACS3, BPES3, TWIST, CRS	SCS, H-twist, BPES2, bHLHa38, CRS1	7p21.1	U80998	NM_000474	BHLH	Basic helix-loop-helix proteins	420
+20670	TWIST2	twist family bHLH transcription factor 2	Approved		DERMO1, Dermo-1, bHLHa39	2q37.3	BC017907		BHLH	Basic helix-loop-helix proteins	420
+12593	USF1	upstream transcription factor 1	Approved		UEF, MLTFI, bHLHb11	1q23.3	BC035505	NM_007122	BHLH	Basic helix-loop-helix proteins	420
+12594	USF2	upstream transcription factor 2, c-fos interacting	Approved		FIP, bHLHb12	19q13	AY007087	NM_003367	BHLH	Basic helix-loop-helix proteins	420
