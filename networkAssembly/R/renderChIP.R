@@ -32,11 +32,16 @@ require(xlsx)
 #' have been documented in that cell line will be filtered by cutoff and then written to file.
 #' It is set to NA by default, and is an optional parameter.
 #'
-#' @param cellLineType A single word which corresponds to the organ you wish to see cell lines
+#' @param cellLineType A single string which corresponds to the organ you wish to see cell lines
 #' from
 #'
-#' @param cellLineDiagnosis A single word which corresponds to the diagnosis of the person the
+#' @param cellLineDiagnosis A single string which corresponds to the diagnosis of the person the
 #' cell line is from
+#' @param outFileName A string of the desired output file name, optional.  It should be
+#' the part of the file name before the extension (ex. "filename" becomes filename.rels)
+#'
+#' @param writeToFile A boolean value, determining whether the output will be returned to
+#' the environment or written to file (FALSE and TRUE, respectively.  Default to TRUE
 #' 
 #' @return Writes two files to disk, one with the file type .ents, which is the recorded entries
 #' from the database that passed the filters specified, and one with the file type .rels, which
@@ -58,7 +63,8 @@ require(xlsx)
 #' filterChIPAtlas(1, NA, "auto", NA, "blood", "leukemia")
 #' 
 filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
-                            cellLineType=NA, cellLineDiagnosis = NA) {
+                            cellLineType=NA, cellLineDiagnosis = NA,
+                            outFileName = NA, writeToFile=TRUE) {
     rdsFN <- paste("chip-atlas-", distance, "kb.rds", sep = "")
     if(!file.exists(rdsFN)) {
         folderName <- paste("chip-atlas-", distance, "kb/", sep = "")
@@ -95,25 +101,62 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
     if(!is.na(cellLines)) {
         ChIPlist <- filterByCellLine(ChIPlist, cellLines)
     }
-    if(cutoffType == "average") {
-        getByAverageBS(ChIPlist, cutoff)
-    }
-    else if(cutoffType == "min") {
-        getByMinBS(ChIPlist, cutoff)
-    }
-    else if(cutoffType == "max") {
-        getByMaxBS(ChIPlist, cutoff)
-    }
-    else if(cutoffType == "automatic" || cutoffType == "auto") {
-        getByAutoBS(ChIPlist)
+    if(writeToFile==TRUE) {
+        if(!is.na(outFileName)) {
+            if(cutoffType == "average") {
+                getByAverageBS(ChIPlist, cutoff, outFileName)
+            }
+            else if(cutoffType == "min") {
+                getByMinBS(ChIPlist, cutoff, outFileName)
+            }
+            else if(cutoffType == "max") {
+                getByMaxBS(ChIPlist, cutoff, outFileName)
+            }
+            else if(cutoffType == "automatic" || cutoffType == "auto") {
+                getByAutoBS(ChIPlist, outFileName)
+            }
+            else {
+                print("Please provide a valid cutoff type")
+            }
+        }
+        else {
+            if(cutoffType == "average") {
+                getByAverageBS(ChIPlist, cutoff)
+            }
+            else if(cutoffType == "min") {
+                getByMinBS(ChIPlist, cutoff)
+            }
+            else if(cutoffType == "max") {
+                getByMaxBS(ChIPlist, cutoff)
+            }
+            else if(cutoffType == "automatic" || cutoffType == "auto") {
+                getByAutoBS(ChIPlist)
+            }
+            else {
+                print("Please provide a valid cutoff type")
+            }
+        }
     }
     else {
-        print("Please provide a valid cutoff type")
+        if(cutoffType == "average") {
+            getByAverageBS(ChIPlist, cutoff, NA, FALSE)
+        }
+        else if(cutoffType == "min") {
+            getByMinBS(ChIPlist, cutoff, NA, FALSE)
+        }
+        else if(cutoffType == "max") {
+            getByMaxBS(ChIPlist, cutoff, NA, FALSE)
+        }
+        else if(cutoffType == "automatic" || cutoffType == "auto") {
+            getByAutoBS(ChIPlist, NA, FALSE)
+        }
+        else {
+            print("Please provide a valid cutoff type")
+        }   
     }
 }
-
 ## Helper function which writes the .rels and .ents files
-writeRelsEnts <- function(ChIPdata) {
+writeRelsEnts <- function(ChIPdata, outFileName, writeToFile) {
     mRNAs <- unique(ChIPdata$Target_genes)
     TFs <- unique(ChIPdata$TF)
     
@@ -146,9 +189,23 @@ writeRelsEnts <- function(ChIPdata) {
     ChIP.rels <- ChIP.rels %>%
         transmute(uid = 1:nrow(ChIP.rels), srcuid = srcuid, trguid = trguid,
                   type = 'conflict', pmids = NA, nls = NA)
-
-    write.table(ChIP.ents, 'ChIPfilter.ents', col.names=T, row.names = F, sep = '\t', quote = F)
-    write.table(ChIP.rels, 'ChIPfilter.rels', col.names=T, row.names = F, sep = '\t', quote = F)
+    if(writeToFile) {
+        if(!is.na(outFileName)) {
+            write.table(ChIP.ents, paste(outFileName, ".ents", sep=""),
+                        col.names=T,row.names = F, sep = '\t', quote = F)
+            write.table(ChIP.rels, paste(outFileName, ".rels", sep=""),
+                        col.names=T, row.names = F, sep = '\t', quote = F)
+        }
+        write.table(ChIP.ents, 'ChIPfilter.ents', col.names=T,
+                    row.names = F, sep = '\t', quote = F)
+        write.table(ChIP.rels, 'ChIPfilter.rels', col.names=T,
+                    row.names = F, sep = '\t', quote = F)
+    }
+    else {
+        returnData <- list(ChIP.ents, ChIP.rels)
+        names(returnData) <- c("filteredChIP.ents", "filteredChIP.rels")
+        return(returnData)
+    }
 }
 
 ## Helper function which allows a vectorized call on the list of objects for selection by
@@ -165,14 +222,17 @@ getByAverageBShelper <- function(ChIPlistItem, cutoff) {
 }
 
 ## Function to get by average binding score
-getByAverageBS <- function(ChIPlist, cutoff) {
+getByAverageBS <- function(ChIPlist, cutoff, outFileName = NA, writeToFile=TRUE) {
     ChIP <- do.call(rbind, lapply(ChIPlist, function(x) {getByAverageBShelper(x, cutoff)}))
-
-    writeRelsEnts(ChIP)  
+    if(writeToFile) {
+        writeRelsEnts(ChIP, outFileName, writeToFile)
+    }
+    else {
+        result <- writeRelsEnts(ChIP, outFileName, writeToFile)
+        return (result)
+    }
 }
 
-## Helper function which allows a vectorized call on the list of objects for selection by
-## minimum binding score
 
 getByMinBShelper <- function(ChIPlistItem, cutoff) {
     returnData <- data.frame(Target_genes = NA, TF = NA, stringsAsFactors = F)
@@ -194,11 +254,17 @@ getByMinBShelper <- function(ChIPlistItem, cutoff) {
 }
 
 ## Function to get by average binding score,
-getByMinBS <- function(ChIPlist, cutoff) {
+getByMinBS <- function(ChIPlist, cutoff, outFileName = NA, writeToFile=TRUE) {
     ## Data frame from repository with specified average
     ChIP <- do.call(rbind, lapply(ChIPlist, function(x) {getByMinBShelper(x, cutoff)}))
 
-    writeRelsEnts(ChIP)
+    if(writeToFile) {
+        writeRelsEnts(ChIP, outFileName, writeToFile)
+    }
+    else {
+        result <- writeRelsEnts(ChIP, outFileName, writeToFile)
+        return (result)
+    }
 }
 
 ## Helper function to get by max binding score
@@ -221,9 +287,15 @@ getByMaxBShelper <- function(ChIPlistItem, cutoff) {
 }
 
 ## Function to get by average binding score,
-getByMaxBS <- function(ChIPlist, cutoff) {
+getByMaxBS <- function(ChIPlist, cutoff, outFileName = NA, writeToFile=TRUE) {
     ChIP <- do.call(rbind, lapply(ChIPlist, function(x) {getByMinBShelper(x, cutoff)}))
-    writeRelsEnts(ChIP)
+    if(writeToFile) {
+        writeRelsEnts(ChIP, outFileName, writeToFile)
+    }
+    else {
+        result <- writeRelsEnts(ChIP, outFileName, writeToFile)
+        return (result)
+    }
 }
 
 ## Helper function to get by automatic threshold
@@ -248,9 +320,15 @@ getByAutoBShelper <- function(ChIPlistItem) {
 }
 
 ## Function to get by an automatic threshold, calculated for each transcription factor
-getByAutoBS <- function(ChIPlist) {
+getByAutoBS <- function(ChIPlist, outFileName = NA, writeToFile=TRUE) {
     ChIP <- do.call(rbind, lapply(ChIPlist, getByAutoBShelper))
-    writeRelsEnts(ChIP)
+    if(writeToFile) {
+        writeRelsEnts(ChIP, outFileName, writeToFile)
+    }
+    else {
+        result <- writeRelsEnts(ChIP, outFileName, writeToFile)
+        return(result)
+    }
 }
 
 
@@ -298,6 +376,9 @@ findCellLines <- function(cellLinePTtype, cellLineDiagnosis = NA) {
         cellTypeDatabase <- read.xlsx("cellLines.xlsx", sheetIndex=1, stringsAsFactors=F)
         saveRDS(cellTypeDatabase, rdsFN)
         gc()
+    }
+    else {
+        cellTypeDatabase <- readRDS("cellLines.rds")
     }
     if(!is.na(cellLineDiagnosis)) {
         cellLines <- cellTypeDatabase  %>%
