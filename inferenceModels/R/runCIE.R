@@ -2,12 +2,12 @@ require(QuaternaryProd)
 require(fdrtool)
 require(dplyr)
 
-#' Run Inference Models
+#' Run Causual Inference Enrichment
 #'
 #' @description Runs inference models selected on network selected, with differentially
 #' expressed genes provided, and with methods requested.
 #' 
-#' @usage runInferenceModels(databaseType = c("TRED", "string", "ChIP"), filter = FALSE,
+#' @usage runCIE(databaseType = c("TRED", "string", "ChIP"), filter = FALSE,
 #'                               DEGs, p.thresh = 0.05, fc.thresh=log(1.5),
 #'                               methods,
 #'                               filteredDataName=NA, ents=NA, rels=NA, useFile=TRUE,
@@ -88,7 +88,8 @@ require(dplyr)
 #' View(enrichment$Quaternary$cell_line_cxcl12_tgfb_evidence_edgeR.txt)
 #' 
 
-runInferenceModels <- function(databaseType = c("TRED", "string", "ChIP"), filter = FALSE,
+runCIE <- function(databaseType = c("TRED", "string", "ChIP"),
+                               filter = FALSE,
                                DEGs, p.thresh = 0.05, fc.thresh=log(1.5),
                                methods,
                                filteredDataName=NA, ents=NA, rels=NA, useFile=TRUE,
