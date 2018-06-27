@@ -120,20 +120,17 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
             distinct(id, .keep_all = T)
 
         ## End Dr. Zarringhalam code
-
+        
+        sigEnts <- ents[ents$id %in% sigDEG$id,]
         sigEntsTempUIDs <- lapply(sigProt, function(x) {
-                    uids <- rels %>% dplyr::filter(srcuid == x) %>%
-                        dplyr::select(trguid)
-                    sigEntsTemp <- ents[((ents$uid %in% uids) &&
-                                            (ents$id %in% sigDEG&id)), ]
+                    targets <- rels %>% dplyr::filter(srcuid == x) 
+                    sigEntsTemp <- sigEnts[sigEnts$id %in% targets$trguid, ]
                     if(nrow(sigEntsTemp) > 10) {
                         sigDEGsub <- sigDEG[sigDEG$id %in% sigEntsTemp$id,] %>%
                             dplyr::arrange(pval)
-                        sigDEGsub <- as.numeric(sigDEGsub$pval)
                         sigDEGsub <- sigDEGsub[1:10,]
-                        uids <- sigEnts[entss$id %in% sigDEGsub$id,] %>%
-                            select(uid)
-                        uids <- as.numeric(uids)
+                        sigEntsTemp <- sigEntsTemp[sigEntsTemp$id %in% sigDEGsub$id,]
+                        uids <- as.numeric(sigEntsTemp$uid)
                         uids
                     } else { sigEntsTemp$uid } } )
         sigEntsTempUIDs <- unique(unlist(sigEntsTempUIDs))
@@ -145,9 +142,18 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
             sigEntsTempUIDs <- lapply(sigProt, function(x) {
                 uids <- rels %>% dplyr::filter(srcuid == x) %>%
                     dplyr::select(trguid)
-                uids <- as.numeric(uids$trguid)
+                tempEnts <- ents[as.numeric(uids$trguid),]
+                tempEnts <- tempEnts[tempEnts$id %in% DEG$id, ]
+                uids <- as.numeric(tempEnts$uids)
                 if(length(uids) > 10) {
-                    uids[1:10]
+                    pVal <- sapply(tempEnts$id, function(x) {
+                        index <- which(DEG$id == x)
+                        DEG$pVal[index]
+                    })
+                    print(head(pVal))
+                    uids <- data.frame(uids, pVal)
+                    uids <- uids %>% dplyr::arrange(pVal)
+                    uids$uids[1:10]
                 } else { uids } } )
             sigEntsTempUIDs <- unique(unlist(sigEntsTempUIDs))
             sigEnts <- ents[sigEntsTempUIDs,]
@@ -157,29 +163,25 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
         sigRels <- sigRels[(sigRels$trguid %in% sigEnts$uid),]
 
         sigEnts <- rbind(ents[sigProt,], sigEnts)
-        sigEnts <- sigEnts[complete.cases(sigEnts),]
         
-        mRNAfc <- apply(sigEnts, 1, function(x) {
-            index <- which(sigDEG$id == x[3])
+        mRNAfc <- sapply(sigEnts$id, function(x) {
+            index <- which(sigDEG$id == x)
             if(length(index) == 0) {
                 NA
             } else {
                 sigDEG$val[index]
             }
         })
-        
-        mRNAfc[sigEnts$type == "Protein"] <- NA
+     
         colorPal <- brewer.pal(11, "Spectral")
-        colorMap <- data.frame(type = as.character(sigEnts$type), mRNAfc,
-                               stringsAsFactors=FALSE)
+        type <- as.character(sigEnts$type)
         
-        colors <- apply(colorMap, 1, function(x) {
-            if(x[1] == "mRNA") {
-                if(is.na(x[2])) { "#7b7c7c" }
-                else if(x[2] == 1) { colorPal[2] }
-                else if(x[2] == 0) { "#FFFFFF" }
-                else if(x[2] == -1) { colorPal[10] }
-                else { "#7b7c7c" }
+        colors <- sapply(1:nrow(colorMap), function(x) {
+            if(type[x] == "mRNA") {
+                if(is.na(mRNAfc[x])) { "#7b7c7c" }
+                else if(mRNAfc[x] == 1) { colorPal[2] }
+                else if(mRNAfc[x] == 0) { "#FFFFFF" }
+                else if(mRNAfc[x] == -1) { colorPal[10] }
             } else { colorPal[11] } } )
 
         nodeD <- data.frame(id=as.character(sigEnts$uid),
