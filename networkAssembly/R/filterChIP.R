@@ -378,7 +378,7 @@ findCellLines <- function(cellLinePTtype, cellLineDiagnosis = NA) {
         gc()
     }
     else {
-        cellTypeDatabase <- readRDS("cellLines.rds")
+        cellTypeDatabase <- readRDS(rdsFN)
     }
     if(!is.na(cellLineDiagnosis)) {
         cellLines <- cellTypeDatabase  %>%

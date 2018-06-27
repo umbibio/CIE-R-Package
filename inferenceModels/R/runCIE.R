@@ -95,10 +95,9 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP"),
                                filteredDataName=NA, ents=NA, rels=NA, useFile=TRUE,
                                useMart=FALSE, useBHLH=FALSE, martFN=NA, BHLHFN=NA,
                                hypTabs= c("1", "2"), verbose=T, databaseDir = NA) {
-    databaseType = match.arg(databaseType)
     hypTabs = match.arg(hypTabs)
     if(useFile) {
-        if(!filter & !is.na(filteredDataName)) {
+        if(!filter & is.na(filteredDataName)) {
             if(is.na(databaseDir)) {
                 relsFN <- paste("../../data/", databaseType, ".rels", sep="")
                 entsFN <- paste("../../data/", databaseType, ".ents", sep="")
@@ -111,7 +110,7 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP"),
         else if(filter & databaseType != "ChIP") {
             stop("Filtering is currenlty only suppored for ChIP Atlas data")
         }
-        else if(filter & !is.na(filteredDataName)) {
+        else if(filter & is.na(filteredDataName)) {
             relsFN <- paste(databaseType, "filter.rels", sep="")
             entsFN <- paste(databaseType, "filter.ents", sep="")
         }
@@ -161,6 +160,7 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP"),
     else {
         DEGs.E <- processDEGs(DEGs, ents, rels, p.thresh, fc.thresh)
     }
+    print("Running Enrichment")
     if(length(methods) > 1 & class(DEGs.E) == "list") {
         enrichment <- lapply(methods, function(x) {
             lapply(DEGs.E, function(y) {
@@ -180,6 +180,7 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP"),
     else {
         enrichment <- runEnrichment(ents, rels, DEGs.E, verbose, hypTabs, method)
     }
+    print("Complete!")
     return(enrichment)
 }
 runEnrichment <- function(ents, rels, DEGtable, verbose, hypTabs, method) {
@@ -221,10 +222,15 @@ runEnrichment <- function(ents, rels, DEGtable, verbose, hypTabs, method) {
     }
 
 }
+
+## The following protion of code was written by Dr. Kourosh Zarringhalam, presented here
+## with minor edits. The bulk of these edits was changing the response to input that
+## could not be processed from quitting R to stopping function execution with a message.
 processDEGs <- function(DEGs, ents, rels, p.thresh = 0.05, fc.thresh = log(1.5)){
   ents.mRNA = ents[which(ents$type == 'mRNA'),]
   evidence = DEGs
-  pval.ind = grep('qval|q.val|q-val|q-val|P-value|P.value|pvalue|pval|Pval', colnames(evidence), ignore.case = T)
+  pval.ind = grep('qval|q.val|q-val|q-val|P-value|P.value|pvalue|pval|Pval',
+                  colnames(evidence), ignore.case = T)
   fc.ind = grep('fc|FC|fold|FoldChange', colnames(evidence), ignore.case = T)
   id.ind = grep('id|entr|Entrez', colnames(evidence), ignore.case = T)
   
