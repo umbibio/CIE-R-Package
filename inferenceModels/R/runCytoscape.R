@@ -7,8 +7,8 @@ require(RColorBrewer)
 #' @description Creates graphs of protein-gene interactions based on enrichment analyses
 #' by this pipeline
 #'
-#' @usage createCytoGraph(enrichment, ents, rels, DEGs)
-#'
+#' @usage createCytoGraph(enrichment, ents, rels, DEGs, p.thresh=0.05,
+#'                            fc.thresh = log(1.5), numProt=5)
 #' @param enrichment The enrichment tables from the analysis pipeline.  Can be a list
 #' of lists (multiple methods and conditions) or a list (multiple conditions, one
 #' method), or a single data frame
@@ -20,6 +20,12 @@ require(RColorBrewer)
 #' @param DEGs The differentially expressed gene tables, can be a single data frame
 #' or list of data frames matching that which the pipeline was run on.
 #'
+#' @param p.thresh The p value threshold used in determining the significant
+#' differentailly expressed genes for enrichment analysis
+#'
+#' @param fc.thresh The fold count threshold used in determining the significant
+#' differentially expressed genes for enrichment analysis
+#' 
 #' @param numProt The number of protiens, ranked by p.value from enrichment, to include
 #'
 #' @return Opens a browser window with the graph, green = proteins, purple = mRNA
@@ -41,7 +47,8 @@ require(RColorBrewer)
 #'                                 useFile=F, useMart=TRUE, useBHLH=TRUE,
 #'                                 martFN="../CIE/data/mart_human_TFs.csv",
 #'                                 BHLHFN="../CIE/data/BHLH_TFs.txt")
-#' createCytoGraph(enrichment, ChIP1ap$filteredChIP.ents, ChIP1ap$filteredChIP.rels, degs)
+#' createCytoGraph(enrichment, ChIP1ap$filteredChIP.ents,
+#'                 ChIP1ap$filteredChIP.rels, degs)
     
 createCytoGraph <- function(enrichment, ents, rels, DEGs, p.thresh=0.05,
                             fc.thresh = log(1.5), numProt=5) {
@@ -142,7 +149,7 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
         type <- as.character(sigEnts$type)
         
         mRNAfc <- c(rep(NA, length(sigProt)), mRNAfc)
-        colors <- sapply(1:length(type), function(x) {
+        colorsNode <- sapply(1:length(type), function(x) {
           if(type[x] == "mRNA") {
             if(is.na(mRNAfc[x])) { "#7b7c7c" }
             else if(mRNAfc[x] == 1) { colorPal[2] }
@@ -150,17 +157,24 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
             else if(mRNAfc[x] == -1) { colorPal[10] }
           } else { colorPal[11] } } )
         
+        edgeType <- sigRels$type
+        colorsEdge <- sapply(1:nrow(sigRels), function(x) {
+          if(edgeType[x]=="increase") { colorPal[3] }
+          else if(edgeType[x] == "conflict") { "#8f9091" }
+          else if(edgeType[x] == "decrease") { colorPal[9] }
+        } )
         nodeD <- data.frame(id=as.character(sigEnts$uid),
                             name=sigEnts$name,
-                            color=colors,
+                            color=colorsNode,
                             stringsAsFactors=FALSE)
         
         edgeD <- data.frame(id = sigRels$uid,
                             source=as.character(sigRels$srcuid),
                             target=as.character(sigRels$trguid),
+                            color = colorsEdge,
                             stringsAsFactors=FALSE)
         
-        network <- createCytoscapeJsNetwork(nodeD, edgeD, edgeColor=colorPal[4])
+        network <- createCytoscapeJsNetwork(nodeD, edgeD)
         rcytoscapejs(network$nodes, network$edges, showPanzoom=FALSE)
     }
 }
