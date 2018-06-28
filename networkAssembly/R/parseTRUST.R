@@ -1,6 +1,7 @@
 library(dplyr)
 library(org.Hs.eg.db)
 
+require(readr)
 parseTRUST <- function(in.file){
   
   ## TRUST Database
@@ -46,6 +47,4 @@ parseTRUST <- function(in.file){
 
 
 
-in.file <- '/Users/yasamanrezvani/docs/Summer_2018/Networks/trrust_rawdata.human.tsv'
-L <- parseTRUST(in.file)
 

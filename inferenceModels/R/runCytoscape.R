@@ -122,80 +122,58 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
         ## End Dr. Zarringhalam code
         
         sigEnts <- ents[ents$id %in% sigDEG$id,]
+        sigRels <- rels[(rels$srcuid %in% sigProt), ]
         sigEntsTempUIDs <- lapply(sigProt, function(x) {
-                    targets <- rels %>% dplyr::filter(srcuid == x) 
-                    sigEntsTemp <- sigEnts[sigEnts$id %in% targets$trguid, ]
-                    if(nrow(sigEntsTemp) > 10) {
-                        sigDEGsub <- sigDEG[sigDEG$id %in% sigEntsTemp$id,] %>%
-                            dplyr::arrange(pval)
-                        sigDEGsub <- sigDEGsub[1:10,]
-                        sigEntsTemp <- sigEntsTemp[sigEntsTemp$id %in% sigDEGsub$id,]
-                        uids <- as.numeric(sigEntsTemp$uid)
-                        uids
-                    } else { sigEntsTemp$uid } } )
+           helpFuncTop10bypVal(x, sigEnts, sigRels, sigDEG) })
+        
         sigEntsTempUIDs <- unique(unlist(sigEntsTempUIDs))
         sigEnts <- ents[sigEntsTempUIDs,]
-                
         
-        if(nrow(sigEnts) == 0) {
-            warning("No significantly differentially expressed genes found as targets of proteins specified, using top 10 by p value")
-            sigEntsTempUIDs <- lapply(sigProt, function(x) {
-                uids <- rels %>% dplyr::filter(srcuid == x) %>%
-                    dplyr::select(trguid)
-                tempEnts <- ents[as.numeric(uids$trguid),]
-                tempEnts <- tempEnts[tempEnts$id %in% DEG$id, ]
-                uids <- as.numeric(tempEnts$uids)
-                if(length(uids) > 10) {
-                    pVal <- sapply(tempEnts$id, function(x) {
-                        index <- which(DEG$id == x)
-                        DEG$pVal[index]
-                    })
-                    print(head(pVal))
-                    uids <- data.frame(uids, pVal)
-                    uids <- uids %>% dplyr::arrange(pVal)
-                    uids$uids[1:10]
-                } else { uids } } )
-            sigEntsTempUIDs <- unique(unlist(sigEntsTempUIDs))
-            sigEnts <- ents[sigEntsTempUIDs,]
-        } 
-        
-        sigRels <- rels[(rels$srcuid %in% sigProt), ]
-        sigRels <- sigRels[(sigRels$trguid %in% sigEnts$uid),]
-
         sigEnts <- rbind(ents[sigProt,], sigEnts)
+        sigRels <- sigRels[sigRels$trguid %in% sigEnts$uid, ]
         
-        mRNAfc <- sapply(sigEnts$id, function(x) {
-            index <- which(sigDEG$id == x)
-            if(length(index) == 0) {
-                NA
-            } else {
-                sigDEG$val[index]
-            }
-        })
-     
+        mRNAfc <- sigEnts %>% 
+          dplyr::filter(type == "mRNA") %>%
+          dplyr::mutate(mRNAfc = sigDEG$val[sigDEG$id %in% id]) %>%
+          dplyr::select(mRNAfc)
+        mRNAfc <- mRNAfc$mRNAfc
+        
         colorPal <- brewer.pal(11, "Spectral")
         type <- as.character(sigEnts$type)
         
-        colors <- sapply(1:nrow(colorMap), function(x) {
-            if(type[x] == "mRNA") {
-                if(is.na(mRNAfc[x])) { "#7b7c7c" }
-                else if(mRNAfc[x] == 1) { colorPal[2] }
-                else if(mRNAfc[x] == 0) { "#FFFFFF" }
-                else if(mRNAfc[x] == -1) { colorPal[10] }
-            } else { colorPal[11] } } )
-
+        mRNAfc <- c(rep(NA, length(sigProt)), mRNAfc)
+        colors <- sapply(1:length(type), function(x) {
+          if(type[x] == "mRNA") {
+            if(is.na(mRNAfc[x])) { "#7b7c7c" }
+            else if(mRNAfc[x] == 1) { colorPal[2] }
+            else if(mRNAfc[x] == 0) { "#FFFFFF" }
+            else if(mRNAfc[x] == -1) { colorPal[10] }
+          } else { colorPal[11] } } )
+        
         nodeD <- data.frame(id=as.character(sigEnts$uid),
-                        name=sigEnts$name,
-                        type=sigEnts$type,
-                        color=colors,
-                        stringsAsFactors=FALSE)
+                            name=sigEnts$name,
+                            color=colors,
+                            stringsAsFactors=FALSE)
         
         edgeD <- data.frame(id = sigRels$uid,
-                        source=as.character(sigRels$srcuid),
-                        target=as.character(sigRels$trguid),
-                        stringsAsFactors=FALSE)
-
+                            source=as.character(sigRels$srcuid),
+                            target=as.character(sigRels$trguid),
+                            stringsAsFactors=FALSE)
+        
         network <- createCytoscapeJsNetwork(nodeD, edgeD, edgeColor=colorPal[4])
         rcytoscapejs(network$nodes, network$edges, showPanzoom=FALSE)
     }
+}
+helpFuncTop10bypVal <- function(sigProtein, sigEnts, sigRels, sigDEG) {
+  tarRels <- sigRels %>% dplyr::filter(srcuid == sigProtein)
+  targs <- tarRels$trguid
+  sigTarg <- targs[targs %in% sigEnts$uid]
+  if(length(sigTarg) > 10) {
+    sortTable <- sigEnts[sigEnts$uid %in% sigTarg, ] %>% 
+      dplyr::mutate(pVal = sigDEG$pval[sigDEG$id %in% id]) %>% 
+      dplyr::select(uid, pVal) %>% dplyr::arrange(pVal)
+    sortTable <- sortTable[1:10,]
+    sortTable$uid
+  }
+  else{ sigTarg }
 }

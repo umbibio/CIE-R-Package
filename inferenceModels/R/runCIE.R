@@ -88,7 +88,7 @@ require(dplyr)
 #' View(enrichment$Quaternary$cell_line_cxcl12_tgfb_evidence_edgeR.txt)
 #' 
 
-runCIE <- function(databaseType = c("TRED", "string", "ChIP"),
+runCIE <- function(databaseType = c("TRED", "string", "ChIP", "trrust"),
                                filter = FALSE,
                                DEGs, p.thresh = 0.05, fc.thresh=log(1.5),
                                methods,
@@ -178,7 +178,7 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP"),
             runEnrichment(ents, rels, x, verbose, hypTabs, methods) } )
     }
     else {
-        enrichment <- runEnrichment(ents, rels, DEGs.E, verbose, hypTabs, method)
+        enrichment <- runEnrichment(ents, rels, DEGs.E, verbose, hypTabs, methods)
     }
     print("Complete!")
     return(enrichment)
