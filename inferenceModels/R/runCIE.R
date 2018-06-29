@@ -99,8 +99,8 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "trrust"),
     if(useFile) {
         if(!filter & is.na(filteredDataName)) {
             if(is.na(databaseDir)) {
-                relsFN <- paste("../../data/", databaseType, ".rels", sep="")
-                entsFN <- paste("../../data/", databaseType, ".ents", sep="")
+                relsFN <- paste("../data/", databaseType, ".rels", sep="")
+                entsFN <- paste("../data/", databaseType, ".ents", sep="")
             }
             else {
                 relsFN <- paste(databaseDir, databaseType, ".rels", sep="")

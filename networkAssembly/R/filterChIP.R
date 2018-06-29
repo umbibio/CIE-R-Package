@@ -65,7 +65,7 @@ require(xlsx)
 filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
                             cellLineType=NA, cellLineDiagnosis = NA,
                             outFileName = NA, writeToFile=TRUE) {
-    rdsFN <- paste("chip-atlas-", distance, "kb.rds", sep = "")
+    rdsFN <- paste("../data/chip-atlas-", distance, "kb.rds", sep = "")
     if(!file.exists(rdsFN)) {
         folderName <- paste("chip-atlas-", distance, "kb/", sep = "")
         tsvFiles <- list.files(folderName)
@@ -371,7 +371,7 @@ filterByCellLine <- function(ChIPlist, cellLines) {
 
 
 findCellLines <- function(cellLinePTtype, cellLineDiagnosis = NA) {
-    rdsFN <- "cellLines.rds"
+    rdsFN <- "../data/cellLines.rds"
     if(!file.exists(rdsFN)) {
         cellTypeDatabase <- read.xlsx("cellLines.xlsx", sheetIndex=1, stringsAsFactors=F)
         saveRDS(cellTypeDatabase, rdsFN)

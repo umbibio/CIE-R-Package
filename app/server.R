@@ -1,0 +1,163 @@
+
+source("../networkAssembly/R/filterChIP.R")
+source("../inferenceModels/R/runCIE.R")
+source("../inferenceModels/R/runCytoscape.R")
+library("stringr")
+library("DT")
+
+helperFunctionTable <- function(input, ents, rels) {
+    if(length(input$degFiles$datapath) > 1) {
+      degs <- lapply(input$degFiles$datapath, function(x) {
+           read.table(x, header=T, sep="\t") } )
+    }
+    else {
+      degs <- read.table(input$degFiles$datapath, header=T, sep="\t")
+    }
+    enrichment <- runCIE(NULL, NULL, DEGs = degs,
+                         p.thresh = input$p.thresh,
+                         fc.thresh = log(input$fc.thresh),
+                         methods = input$method,
+                         useFile=FALSE,
+                         ents = ents,
+                         rels = rels,
+                         useMart = input$useMart,
+                         martFN = "../data/mart_human_TFs.csv",
+                         useBHLH = input$useBHLH,
+                         BHLHFN = "../data/BHLH_TFs.txt",
+                         hypTabs="1",
+                         verbose=F)
+    ## Code which will display the enrichment given that only one output has been
+    ## provided, which is the case due to minor changes in the interface.
+    enrichment
+    
+    ## Code with unknown bug that would allow for multiple outputs as
+    ## I intended when writing the function.
+    ## if((class(enrichment) == "data.frame") && 
+    ##     (class(degs) == "data.frame")) {
+    ##   resultTitles <- paste(input$method, input$degFiles$name, sep = ".")
+    ##   tables <- enrichment
+    ## }
+    ## else if((class(enrichment) == "list") &&
+    ##    (class(enrichment[[1]]) == "data.frame") &&
+    ##    (class(degs == "list"))) {
+    ##   resultTitles <- paste(input$method, names(enrichment), sep = ".")
+    ##   tables <- lapply(enrichment, function(x) {x} )
+    ## }
+    ## else if((class(enrichment) == "list") &&
+    ##         (class(enrichment[[1]]) == "data.frame") &&
+    ##         (class(degs == "data.frame"))) {
+    ##   resultTitles <- paste(names(enrichment), input$degFiles$name, sep = ".")
+    ##   tables <- lapply(enrichment, function(x) {x} )
+    ## }
+    ## else if((class(enrichment) == "list") &&
+    ##    (class(enrichment[[1]]) == "list")) {
+    ##     resultTitles <- lapply(1:length(enrichment), function(x) {
+    ##         lapply(1:length(enrichment[[1]]), function(y) {
+    ##             paste(names(enrichment)[x], names(enrichment[[x]])[y],
+    ##                   sep = "\\.") } ) } )
+    ##     tables <- lapply(enrichment, function(x) {
+    ##         lapply(enrichment[[x]], function(y) {
+    ##             y } ) } )
+    ## }
+    ## names(tables) <- resultTitles
+    ## tabTitles <- str_replace_all(as.character(resultTitles), ".", " ")
+    ## print("Return")
+    ## return(list(tables = tables, tabTitles = tabTitles))
+}
+
+
+server <- function(input, output) {
+    entsRels <- reactive({
+        req(input$databaseType)
+        if(input$databaseType == "ChIP") {
+            if (is.character(input$cellLines) &&
+                input$cellLines != "") {
+                cellLines <- unlist(strsplit(input$cellLines, "\\,"))
+            } else {
+                cellLines <- NA
+            }
+            if (is.character(input$cellLineType) &&
+                input$cellLineType != "") {
+                cellLineType <- unlist(strsplit(input$cellLineType, "\\,"))
+            } else {
+                cellLineType <- NA
+            }
+            if (is.character(input$cellLineDiagnosis) &&
+                input$cellLineDiagnosis != "") {
+                cellLineDiagnosis <- unlist(strsplit(input$cellLineDiagnosis, "\\,"))
+            } else {
+                cellLineDiagnosis <- NA
+            }
+            ChIP <- filterChIPAtlas(distance = as.numeric(input$distance),
+                                    cutoff = input$cutoff,
+                                    cutoffType = input$cutoffType,
+                                    cellLines = cellLines,
+                                    cellLineType = cellLineType,
+                                    cellLineDiagnosis = cellLineDiagnosis,
+                                    writeToFile=FALSE)
+            ents <- ChIP$filteredChIP.ents
+            rels <- ChIP$filteredChIP.rels
+        }
+        else {
+            entsFile <- paste("../data/", input$databaseType, ".ents", sep = "")
+            relsFile <- paste("../data/", input$databaseType, ".rels", sep = "")
+            ents <- read.table(entsFile, sep = "\t", header = T,
+                               stringsAsFactors = F)
+            rels <- read.table(relsFile, sep = "\t", header = T,
+                           stringsAsFactors = F)
+        }
+        list(ents=ents, rels=rels)
+    })
+    enrichment <- reactive({
+        req(input$degFiles)
+        helperFunctionTable(input, entsRels()$ents, entsRels()$rels)
+    })
+    output$table <- DT::renderDataTable({
+        req(enrichment())
+        enrichment <- enrichment()
+        table <- enrichment %>%
+            dplyr::select(c(name, total.reachable, significant.reachable,
+                            unreachable))
+        rownames(table) <- enrichment$uid
+        table
+    })
+    output$tableTitle <- renderUI({
+        h3(paste("Enrichment Results for", input$method, "analysis with data base",
+                 input$databaseType))
+    })
+    output$graph <- renderRcytoscapejs({
+        req(enrichment())
+        if(length(input$degFiles$datapath) > 1) {
+            degs <- lapply(input$degFiles$datapath, function(x) {
+                read.table(x, header=T, sep="\t") } )
+        }
+        else {
+            degs <- read.table(input$degFiles$datapath, header=T, sep="\t")
+        }
+        createCytoGraph(enrichment(), entsRels()$ents, entsRels()$rels, degs, numProt = 5)
+    })
+        
+        
+        
+    
+    
+    ## Code which should allow a varying number of tabs to display the results
+    ## of the pipeline but does not due to an unknown bug  
+    ## output$tabs <- renderUI({
+    ##     req(input$degFiles)
+    ##     tablesTabs <- helperFunctionTable(input)
+    ##     if(length(tablesTabs$tabTitles) > 1) {
+    ##       tables <- do.call(renderTable, tablesTabs$tables)
+    ##       tablesOut <- do.call(tableOutput, tables)
+    ##       tabs <- lapply(1:length(tabTitles), function(x) {
+    ##         tabPanel(tablesTabs$tabTitles[x], tablesOut)
+    ##       })
+    ##       do.call(tabsetPanel, tabs)
+    ##     }
+    ##     else {
+    ##       table <- renderTable(tablesTabs$tables, striped = TRUE)
+    ##       tableOut <- tableOutput(table)
+    ##       tabPanel(tablesTabs$tabTitles, table)
+    ##     }
+    ## })
+}

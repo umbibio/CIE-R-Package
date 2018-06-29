@@ -86,6 +86,16 @@ createCytoGraph <- function(enrichment, ents, rels, DEGs, p.thresh=0.05,
                                   fc.thresh=fc.thresh, DEG= DEGs[[x]],
                                   condition=names(enrichment)[x], numProt=numProt) }  )
     }
+    else if(class(enrichment) == "list" &&
+            class(enrichment[[1]]) == "data.frame" &&
+            class(DEGs) == "data.frame") {
+        print("Data type detected")
+        lapply(1:length(enrichment), function(x) {
+            createCytoGraphHelper(enrichment = enrichment[[x]],
+                                  ents = ents, rels = rels, p.thresh = p.thresh,
+                                  fc.thresh=fc.thresh, DEG= DEGs,
+                                  method=names(enrichment)[x], numProt=numProt) }  )
+   }
 }
 createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
                                   p.thresh, fc.thresh, method=NA,
