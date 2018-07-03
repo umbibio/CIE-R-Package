@@ -78,13 +78,13 @@ require(dplyr)
 #'    read.table(x, header=T, sep="\t") } )
 #' names(degs) <- files
 #' methods <- c("Ternary", "Quaternary", "Enrichment", "Fisher")
-#' enrichment <- runInferenceModels(NULL, NULL, DEGs=degs,
-#'                                 method = methods,
-#'                                 ents=ChIP1ap$filteredChIP.ents,
-#'                                 rels=ChIP1ap$filteredChIP.rels,
-#'                                 useFile=F, useMart=TRUE, useBHLH=TRUE,
-#'                                 martFN="../CIE/data/mart_human_TFs.csv",
-#'                                 BHLHFN="../CIE/data/BHLH_TFs.txt")
+#' enrichment <- runCIE(NULL, NULL, DEGs=degs,
+#'                      method = methods,
+#'                      ents=ChIP1ap$filteredChIP.ents,
+#'                      rels=ChIP1ap$filteredChIP.rels,
+#'                      useFile=F, useMart=TRUE, useBHLH=TRUE,
+#'                      martFN="../CIE/data/mart_human_TFs.csv",
+#'                      BHLHFN="../CIE/data/BHLH_TFs.txt")
 #' View(enrichment$Quaternary$cell_line_cxcl12_tgfb_evidence_edgeR.txt)
 #' 
 
