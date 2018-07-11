@@ -29,10 +29,10 @@ helperFunctionTable <- function(input, ents, rels) {
     ## Code which will display the enrichment given that only one output has been
     ## provided, which is the case due to minor changes in the interface.
     enrichment
-    
+
     ## Code with unknown bug that would allow for multiple outputs as
     ## I intended when writing the function.
-    ## if((class(enrichment) == "data.frame") && 
+    ## if((class(enrichment) == "data.frame") &&
     ##     (class(degs) == "data.frame")) {
     ##   resultTitles <- paste(input$method, input$degFiles$name, sep = ".")
     ##   tables <- enrichment
@@ -119,14 +119,15 @@ server <- function(input, output) {
             dplyr::select(c(name, total.reachable, significant.reachable,
                             unreachable))
         rownames(table) <- enrichment$uid
-        table
+        DT::datatable(table)
     })
     output$tableTitle <- renderUI({
-        h3(paste("Enrichment Results for", input$method, "analysis with data base",
+      h3(paste("Enrichment Results for", input$method, "analysis with data base",
                  input$databaseType))
     })
     output$graph <- renderRcytoscapejs({
         req(enrichment())
+        req(input$table_rows_selected)
         if(length(input$degFiles$datapath) > 1) {
             degs <- lapply(input$degFiles$datapath, function(x) {
                 read.table(x, header=T, sep="\t") } )
@@ -134,15 +135,17 @@ server <- function(input, output) {
         else {
             degs <- read.table(input$degFiles$datapath, header=T, sep="\t")
         }
-        createCytoGraph(enrichment(), entsRels()$ents, entsRels()$rels, degs, numProt = 5)
+        createCytoGraph(enrichment(), entsRels()$ents, entsRels()$rels, degs,
+                        ids=input$table_rows_selected)
+
     })
-        
-        
-        
-    
-    
+
+
+
+
+
     ## Code which should allow a varying number of tabs to display the results
-    ## of the pipeline but does not due to an unknown bug  
+    ## of the pipeline but does not due to an unknown bug
     ## output$tabs <- renderUI({
     ##     req(input$degFiles)
     ##     tablesTabs <- helperFunctionTable(input)
