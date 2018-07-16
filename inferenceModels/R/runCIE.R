@@ -12,6 +12,7 @@ require(dplyr)
 #'                               methods,
 #'                               filteredDataName=NA, ents=NA, rels=NA, useFile=TRUE,
 #'                               useMart=FALSE, useBHLH=FALSE, martFN=NA, BHLHFN=NA,
+#'                               targetsOfInterest=NA
 #'                               hypTabs= c("1", "2"), verbose=T, databaseDir = NA)
 #' @param databaseType Currently we only support selecting one database at a time.  Using
 #' this option and having the database automatically loaded for you only currently works
@@ -58,6 +59,9 @@ require(dplyr)
 #'
 #' @param BHLHFN The full path to the file where the BHLH information can be found
 #'
+#' @param targetsOfIntrest A vector of strings of targets that you want to
+#' show whether or not a protien targets in the analysis.
+#'
 #' @param hypTabs One of 1 or 2, indicating which hypTab function you wish to use
 #'
 #' @param verbose Make output verbose, true by default
@@ -89,12 +93,13 @@ require(dplyr)
 #' 
 
 runCIE <- function(databaseType = c("TRED", "string", "ChIP", "trrust"),
-                               filter = FALSE,
-                               DEGs, p.thresh = 0.05, fc.thresh=log(1.5),
-                               methods,
-                               filteredDataName=NA, ents=NA, rels=NA, useFile=TRUE,
-                               useMart=FALSE, useBHLH=FALSE, martFN=NA, BHLHFN=NA,
-                               hypTabs= c("1", "2"), verbose=T, databaseDir = NA) {
+                   filter = FALSE,
+                   DEGs, p.thresh = 0.05, fc.thresh=log(1.5),
+                   methods,
+                   filteredDataName=NA, ents=NA, rels=NA, useFile=TRUE,
+                   useMart=FALSE, useBHLH=FALSE, martFN=NA, BHLHFN=NA,
+                   targetsOfInterest=NA,
+                   hypTabs= c("1", "2"), verbose=T, databaseDir = NA) {
     hypTabs = match.arg(hypTabs)
     if(useFile) {
         if(!filter & is.na(filteredDataName)) {
@@ -150,6 +155,16 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "trrust"),
         }
         else {
             stop("Please provide a file where the BHLH TFs can be found")
+        }
+    }
+    if(!is.na(targetsOfInterest)) {
+        if(length(targetsOfInterest) >= 1) {
+            sigRels <- rels %>% dplyr::filter(ents$name[trguid] %in% targetsOfInterest)
+
+            colTitle <- paste(targetsOfInterest, collapse = "_")
+            colTitle <- paste("targets", colTitle, sep = "_")
+            ents <- ents %>% dplyr::mutate(colTitle = ents$uid %in% sigRels$srcuid)
+            colnames(ents)[which(colnames(ents) == "colTitle")] = colTitle
         }
     }
     if(class(DEGs) == "list") {
