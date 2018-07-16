@@ -25,7 +25,7 @@ require(RColorBrewer)
 #'
 #' @param fc.thresh The fold count threshold used in determining the significant
 #' differentially expressed genes for enrichment analysis
-#' 
+#'
 #' @param numProt The number of protiens, ranked by p.value from enrichment, to include
 #'
 #' @return Opens a browser window with the graph, green = proteins, purple = mRNA
@@ -49,9 +49,9 @@ require(RColorBrewer)
 #'                                 BHLHFN="../CIE/data/BHLH_TFs.txt")
 #' createCytoGraph(enrichment, ChIP1ap$filteredChIP.ents,
 #'                 ChIP1ap$filteredChIP.rels, degs)
-    
+
 createCytoGraph <- function(enrichment, ents, rels, DEGs, p.thresh=0.05,
-                            fc.thresh = log(1.5), numProt=5) {
+                            fc.thresh = log(1.5), numProt=5, ids=NA) {
     print("Starting Graph Generation")
     if(class(ents) != "data.frame" &&
        class(rels) != "data.frame") {
@@ -61,7 +61,7 @@ createCytoGraph <- function(enrichment, ents, rels, DEGs, p.thresh=0.05,
        class(DEGs) == "data.frame") {
         print("Data type detected")
         createCytoGraphHelper(enrichment, ents, rels, DEGs, p.thresh=p.thresh,
-                              fc.thresh = fc.thresh, numProt=numProt)
+                              fc.thresh = fc.thresh, numProt=numProt, ids=ids)
     }
     else if(class(enrichment) == "list" &&
             class(enrichment[[1]]) == "list" &&
@@ -74,7 +74,7 @@ createCytoGraph <- function(enrichment, ents, rels, DEGs, p.thresh=0.05,
                                       p.thresh = p.thresh, fc.thresh = fc.thresh,
                                       method = names(enrichment)[x],
                                       condition = names(enrichment[[x]])[y],
-                                      numProt = numProt) } ) } )
+                                      numProt = numProt, ids=ids) } ) } )
     }
     else if(class(enrichment) == "list" &&
             class(enrichment[[1]]) == "data.frame" &&
@@ -84,7 +84,7 @@ createCytoGraph <- function(enrichment, ents, rels, DEGs, p.thresh=0.05,
             createCytoGraphHelper(enrichment = enrichment[[x]],
                                   ents = ents, rels = rels, p.thresh = p.thresh,
                                   fc.thresh=fc.thresh, DEG= DEGs[[x]],
-                                  condition=names(enrichment)[x], numProt=numProt) }  )
+                                  condition=names(enrichment)[x], numProt=numProt, ids=ids) }  )
     }
     else if(class(enrichment) == "list" &&
             class(enrichment[[1]]) == "data.frame" &&
@@ -94,12 +94,13 @@ createCytoGraph <- function(enrichment, ents, rels, DEGs, p.thresh=0.05,
             createCytoGraphHelper(enrichment = enrichment[[x]],
                                   ents = ents, rels = rels, p.thresh = p.thresh,
                                   fc.thresh=fc.thresh, DEG= DEGs,
-                                  method=names(enrichment)[x], numProt=numProt) }  )
+                                  method=names(enrichment)[x], numProt=numProt,
+                                  ids=ids) }  )
    }
 }
 createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
                                   p.thresh, fc.thresh, method=NA,
-                                  condition=NA, numProt) {
+                                  condition=NA, numProt, ids) {
 
     print("Starting Analysis")
     sigProt <- enrichment[1:numProt,]
@@ -115,19 +116,19 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
                               " and condition: ", condition,
                               "Graphing...")
         print(returnString)
-    
+
         sigProt <- sigProt$uid
-        
+
         ## Code written by Dr. Kourosh Zarringhalam
         pval.ind = grep('qval|q.val|q-val|q-val|P-value|P.value|pvalue|pval|Pval',
                         colnames(DEG), ignore.case = T)
         fc.ind = grep('fc|FC|fold|FoldChange', colnames(DEG), ignore.case = T)
         id.ind = grep('id|entr|Entrez', colnames(DEG), ignore.case = T)
-  
+
         if(length(id.ind) == 0 | length(fc.ind) == 0 | length(pval.ind) == 0){
             stop('Please make sure the expression files column names are labled as entrez, fc, pvalue')
         }
-  
+
         colnames(DEG)[pval.ind] <- 'pvalue'
         colnames(DEG)[fc.ind] <- 'foldchange'
         colnames(DEG)[id.ind] <- 'id'
@@ -137,27 +138,27 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
             distinct(id, .keep_all = T)
 
         ## End Dr. Zarringhalam code
-        
+
         sigEnts <- ents[ents$id %in% sigDEG$id,]
         sigRels <- rels[(rels$srcuid %in% sigProt), ]
         sigEntsTempUIDs <- lapply(sigProt, function(x) {
            helpFuncTop10bypVal(x, sigEnts, sigRels, sigDEG) })
-        
+
         sigEntsTempUIDs <- unique(unlist(sigEntsTempUIDs))
         sigEnts <- ents[sigEntsTempUIDs,]
-        
+
         sigEnts <- rbind(ents[sigProt,], sigEnts)
         sigRels <- sigRels[sigRels$trguid %in% sigEnts$uid, ]
-        
-        mRNAfc <- sigEnts %>% 
+
+        mRNAfc <- sigEnts %>%
           dplyr::filter(type == "mRNA") %>%
           dplyr::mutate(mRNAfc = sigDEG$val[sigDEG$id %in% id]) %>%
           dplyr::select(mRNAfc)
         mRNAfc <- mRNAfc$mRNAfc
-        
+
         colorPal <- brewer.pal(11, "Spectral")
         type <- as.character(sigEnts$type)
-        
+
         mRNAfc <- c(rep(NA, length(sigProt)), mRNAfc)
         colorsNode <- sapply(1:length(type), function(x) {
           if(type[x] == "mRNA") {
@@ -166,7 +167,7 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
             else if(mRNAfc[x] == 0) { "#FFFFFF" }
             else if(mRNAfc[x] == -1) { colorPal[10] }
           } else { colorPal[11] } } )
-        
+
         edgeType <- sigRels$type
         colorsEdge <- sapply(1:nrow(sigRels), function(x) {
           if(edgeType[x]=="increase") { colorPal[3] }
@@ -177,13 +178,13 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
                             name=sigEnts$name,
                             color=colorsNode,
                             stringsAsFactors=FALSE)
-        
+
         edgeD <- data.frame(id = sigRels$uid,
                             source=as.character(sigRels$srcuid),
                             target=as.character(sigRels$trguid),
                             color = colorsEdge,
                             stringsAsFactors=FALSE)
-        
+
         network <- createCytoscapeJsNetwork(nodeD, edgeD)
         rcytoscapejs(network$nodes, network$edges, showPanzoom=FALSE)
     }
@@ -193,8 +194,8 @@ helpFuncTop10bypVal <- function(sigProtein, sigEnts, sigRels, sigDEG) {
   targs <- tarRels$trguid
   sigTarg <- targs[targs %in% sigEnts$uid]
   if(length(sigTarg) > 10) {
-    sortTable <- sigEnts[sigEnts$uid %in% sigTarg, ] %>% 
-      dplyr::mutate(pVal = sigDEG$pval[sigDEG$id %in% id]) %>% 
+    sortTable <- sigEnts[sigEnts$uid %in% sigTarg, ] %>%
+      dplyr::mutate(pVal = sigDEG$pval[sigDEG$id %in% id]) %>%
       dplyr::select(uid, pVal) %>% dplyr::arrange(pVal)
     sortTable <- sortTable[1:10,]
     sortTable$uid
