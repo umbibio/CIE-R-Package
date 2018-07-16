@@ -44,15 +44,15 @@ fluidPage(
 
             selectInput(inputId = "cellLines",
                       label = "Limit ChIP Atlas results by cell line of experiment",
-                      choices=c(NA, cellLines$Cell.Line.Name),
+                      choices=as.character(c(NA, cellLines$Cell.Line.Name)),
                       selected= "NA"),
             selectInput(inputId = "cellLineType",
                       label = "Limit ChIP Atlas results by cell line tissue origin",
-                      choices=c(NA, unique(cellLines$Primary.Tissue)),
+                      choices=as.character(c(NA, unique(cellLines$Primary.Tissue))),
                       selected= "NA"),
             selectInput(inputId = "cellLineDiagnosis",
                       label = "Limit ChIP Atlas results by the diagnosis of the individual the cell line is from",
-                      choices=c(NA, unique(cellLines$Tissue.Diagnosis)),
+                      choices=as.character(c(NA, unique(cellLines$Tissue.Diagnosis))),
                       selected= "NA")
         ),
         fileInput(inputId = "degFiles",

@@ -8,7 +8,7 @@ require(RColorBrewer)
 #' by this pipeline
 #'
 #' @usage createCytoGraph(enrichment, ents, rels, DEGs, p.thresh=0.05,
-#'                            fc.thresh = log(1.5), numProt=5)
+#'                            fc.thresh = log(1.5), numProt=5, ids=NA)
 #' @param enrichment The enrichment tables from the analysis pipeline.  Can be a list
 #' of lists (multiple methods and conditions) or a list (multiple conditions, one
 #' method), or a single data frame
@@ -27,6 +27,7 @@ require(RColorBrewer)
 #' differentially expressed genes for enrichment analysis
 #'
 #' @param numProt The number of protiens, ranked by p.value from enrichment, to include
+#' @param ids Row indices of the regulators you wish to be included in the plot
 #'
 #' @return Opens a browser window with the graph, green = proteins, purple = mRNA
 #'
@@ -103,7 +104,12 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
                                   condition=NA, numProt, ids) {
 
     print("Starting Analysis")
-    sigProt <- enrichment[1:numProt,]
+    if(!is.na(ids)) {
+        sigProt <- enrichment$uid[ids]
+    }
+    else {
+        sigProt <- enrichment$uid[1:numProt]
+    }
     if(nrow(sigProt) == 0) {
         returnString <- paste("No significant proteins found.",
                               "For Method: ", method,
@@ -117,7 +123,6 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
                               "Graphing...")
         print(returnString)
 
-        sigProt <- sigProt$uid
 
         ## Code written by Dr. Kourosh Zarringhalam
         pval.ind = grep('qval|q.val|q-val|q-val|P-value|P.value|pvalue|pval|Pval',
