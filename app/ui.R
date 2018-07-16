@@ -4,6 +4,7 @@ library(dplyr)
 library(shinycssloaders)
 library(rcytoscapejs)
 
+cellLines <- readRDS("../data/cellLines.rds")
 ## Using fluid bootstrap layour
 fluidPage(
 
@@ -33,23 +34,26 @@ fluidPage(
                                     "Automatic" = "auto"),
                         selected = "average"),
             conditionalPanel (
-                condition = "input.cutoffType %in% c('min', 'max', 'average')",
+                condition = "input.cutoffType != 'auto'",
                 sliderInput(inputId = "cutoff",
                             label = "Binding Score Cutoff",
                             min = 0, max = 1000,
                             value = 500,
                             round=TRUE)
             ),
-            
-            textInput(inputId = "cellLines",
-                      label = "Limit ChIP Atlas results by cell line of experiment.  Please enter cell lines in the following format: HeLa, SEM",
-                      value=""),
-            textInput(inputId = "cellLineType",
+
+            selectInput(inputId = "cellLines",
+                      label = "Limit ChIP Atlas results by cell line of experiment",
+                      choices=c(NA, cellLines$Cell.Line.Name),
+                      selected= "NA"),
+            selectInput(inputId = "cellLineType",
                       label = "Limit ChIP Atlas results by cell line tissue origin",
-                      value=""),
-            textInput(inputId = "cellLineDiagnosis",
+                      choices=c(NA, unique(cellLines$Primary.Tissue)),
+                      selected= "NA"),
+            selectInput(inputId = "cellLineDiagnosis",
                       label = "Limit ChIP Atlas results by the diagnosis of the individual the cell line is from",
-                      value="")
+                      choices=c(NA, unique(cellLines$Tissue.Diagnosis)),
+                      selected= "NA")
         ),
         fileInput(inputId = "degFiles",
                   label = "Upload your differentially expressed gene table, should be in .tsv format",
@@ -77,13 +81,15 @@ fluidPage(
                       value=TRUE),
         checkboxInput(inputId = "useBHLH",
                       label = "Include whether a protein is a BHLH in enrichment results",
-                      value = TRUE)
-        
+                      value = TRUE),
+        actionButton("run", "Run analysis")
+
     ),
     mainPanel(
         rcytoscapejsOutput("graph") %>% withSpinner(color="#0dc5c1"),
         ## Working interface for single output
         uiOutput("tableTitle"),
+        uiOutput("downloadButton"),
         DT::dataTableOutput("table") %>% withSpinner(color="#0dc5c1")
         ## Dropping attempt at tab functionality for now
         ## uiOutput("tabs") %>% withSpinner(color="#0dc5c1")

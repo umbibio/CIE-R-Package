@@ -69,27 +69,35 @@ helperFunctionTable <- function(input, ents, rels) {
 server <- function(input, output) {
     entsRels <- reactive({
         req(input$databaseType)
+        if(input$cutoffType == "auto") {
+            cutoff=NA
+        }
+        else{
+            cutoff=input$cutoff
+        }
+        if(input$cellLines == "NA") {
+            cellLines = NA
+        }
+        else {
+            cellLines <- input$cellLines
+        }
+        
+        if(input$cellLineType == "NA") {
+            cellLineType = NA
+        }
+        else {
+            cellLineType <- input$cellLineType
+        }
+        
+        if(input$cellLineDiagnosis== "NA") {
+            cellLineDiagnosis = NA
+        }
+        else {
+            cellLineDiagnosis <- input$cellLineDiagnosis
+        }
         if(input$databaseType == "ChIP") {
-            if (is.character(input$cellLines) &&
-                input$cellLines != "") {
-                cellLines <- unlist(strsplit(input$cellLines, "\\,"))
-            } else {
-                cellLines <- NA
-            }
-            if (is.character(input$cellLineType) &&
-                input$cellLineType != "") {
-                cellLineType <- unlist(strsplit(input$cellLineType, "\\,"))
-            } else {
-                cellLineType <- NA
-            }
-            if (is.character(input$cellLineDiagnosis) &&
-                input$cellLineDiagnosis != "") {
-                cellLineDiagnosis <- unlist(strsplit(input$cellLineDiagnosis, "\\,"))
-            } else {
-                cellLineDiagnosis <- NA
-            }
             ChIP <- filterChIPAtlas(distance = as.numeric(input$distance),
-                                    cutoff = input$cutoff,
+                                    cutoff = cutoff,
                                     cutoffType = input$cutoffType,
                                     cellLines = cellLines,
                                     cellLineType = cellLineType,
@@ -108,7 +116,7 @@ server <- function(input, output) {
         }
         list(ents=ents, rels=rels)
     })
-    enrichment <- reactive({
+    enrichment <- eventReactive(input$run, {
         req(input$degFiles)
         helperFunctionTable(input, entsRels()$ents, entsRels()$rels)
     })
@@ -119,7 +127,8 @@ server <- function(input, output) {
             dplyr::select(c(name, total.reachable, significant.reachable,
                             unreachable))
         rownames(table) <- enrichment$uid
-        DT::datatable(table)
+        DT::datatable(table, selection=list(mode='multiple',
+                                            selected=1:5))
     })
     output$tableTitle <- renderUI({
       h3(paste("Enrichment Results for", input$method, "analysis with data base",
@@ -139,6 +148,21 @@ server <- function(input, output) {
                         ids=input$table_rows_selected)
 
     })
+    output$downloadButton <- renderUI({
+      req(enrichment())
+      downloadButton('download', label="Download Full Table")
+    })
+    output$download <- downloadHandler(
+        filename = function() {
+            paste(input$method, input$databaseType,
+                  input$degFiles, ".tsv", sep="")
+        },
+        content = function(file) {
+            write.table(enrichment(), file, sep="\t",
+                        row.names=FALSE, quote=FALSE)
+        }
+    )
+
 
 
 
