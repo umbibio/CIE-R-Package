@@ -7,11 +7,11 @@ library("DT")
 
 helperFunctionTable <- function(input, ents, rels) {
     if(length(input$degFiles$datapath) > 1) {
-      degs <- lapply(input$degFiles$datapath, function(x) {
-           read.table(x, header=T, sep="\t") } )
+        degs <- lapply(input$degFiles$datapath, function(x) {
+            read.table(x, header=T, sep="\t") } )
     }
     else {
-      degs <- read.table(input$degFiles$datapath, header=T, sep="\t")
+        degs <- read.table(input$degFiles$datapath, header=T, sep="\t")
     }
     enrichment <- runCIE(NULL, NULL, DEGs = degs,
                          p.thresh = input$p.thresh,
@@ -29,7 +29,7 @@ helperFunctionTable <- function(input, ents, rels) {
     ## Code which will display the enrichment given that only one output has been
     ## provided, which is the case due to minor changes in the interface.
     enrichment
-
+    
     ## Code with unknown bug that would allow for multiple outputs as
     ## I intended when writing the function.
     ## if((class(enrichment) == "data.frame") &&
@@ -81,14 +81,14 @@ server <- function(input, output) {
         else {
             cellLines <- input$cellLines
         }
-        
+
         if(input$cellLineType == "NA") {
             cellLineType = NA
         }
         else {
             cellLineType <- input$cellLineType
         }
-        
+
         if(input$cellLineDiagnosis== "NA") {
             cellLineDiagnosis = NA
         }
@@ -116,23 +116,52 @@ server <- function(input, output) {
         }
         list(ents=ents, rels=rels)
     })
+    ## output$targetSelector <- renderUI({
+    ##  req(entsRels())
+    ##  ents <- entsRels()$ents
+    ##  targets <- ents[ents$type == "mRNA", colnames(ents) %in% "name"]
+    ##  selectInput(inputId = "targetsOfInterest",
+    ##              label = "Show if the Protien Targets Selected Genes",
+    ##              choices = c(NA, targets),
+    ##              selected = NA,
+    ##              multiple = TRUE)
+    ##})
     enrichment <- eventReactive(input$run, {
         req(input$degFiles)
         helperFunctionTable(input, entsRels()$ents, entsRels()$rels)
     })
     output$table <- DT::renderDataTable({
-        req(enrichment())
-        enrichment <- enrichment()
-        table <- enrichment %>%
-            dplyr::select(c(name, total.reachable, significant.reachable,
-                            unreachable))
-        rownames(table) <- enrichment$uid
-        DT::datatable(table, selection=list(mode='multiple',
-                                            selected=1:5))
+        table <- withProgress(message="Calculating Enrichment\n",
+                     detail = "\nThis may take some time",
+                     expr = {
+                         req(enrichment())
+                         enrichment <- enrichment()
+                         index <- grep("pval|pvalue|p.value|p-value|p-val|p.val",
+                                       colnames(enrichment))
+                         index <- unlist(index)
+                         if(length(index) == 1) {
+                             table <- enrichment %>%
+                                 dplyr::select(c(name, total_targets = total.reachable,
+                                                 significant_targets = significant.reachable,
+                                                 index))
+                         }
+                         else {
+                             index2 <- sapply(c("adj"), function(x) {grep(x, colnames(enrichment))})
+                             index2 <- unlist(index2)
+                             table <- enrichment %>%
+                                 dplyr::select(c(name, total_targets = total.reachable,
+                                                 significant_targets = significant.reachable,
+                                                 index2[1], index2[2]))
+                         }
+                         rownames(table) <- enrichment$uid
+                         DT::datatable(table, selection=list(mode='multiple',
+                                                             selected=1:5))
+                     })
+        table
     })
     output$tableTitle <- renderUI({
       h3(paste("Enrichment Results for", input$method, "analysis with data base",
-                 input$databaseType))
+               input$databaseType))
     })
     output$graph <- renderRcytoscapejs({
         req(enrichment())
@@ -145,12 +174,13 @@ server <- function(input, output) {
             degs <- read.table(input$degFiles$datapath, header=T, sep="\t")
         }
         createCytoGraph(enrichment(), entsRels()$ents, entsRels()$rels, degs,
-                        ids=input$table_rows_selected)
-
+                        ids=input$table_rows_selected,
+                        numTargets=input$numTargets)
+        
     })
     output$downloadButton <- renderUI({
-      req(enrichment())
-      downloadButton('download', label="Download Full Table")
+        req(enrichment())
+        downloadButton('download', label="Download Full Table")
     })
     output$download <- downloadHandler(
         filename = function() {
@@ -162,12 +192,12 @@ server <- function(input, output) {
                         row.names=FALSE, quote=FALSE)
         }
     )
+    
 
-
-
-
-
-
+    
+    
+    
+    
     ## Code which should allow a varying number of tabs to display the results
     ## of the pipeline but does not due to an unknown bug
     ## output$tabs <- renderUI({

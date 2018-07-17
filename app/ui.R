@@ -33,13 +33,12 @@ fluidPage(
                                     "Average" = "average",
                                     "Automatic" = "auto"),
                         selected = "average"),
-            conditionalPanel (
-                condition = "input.cutoffType != 'auto'",
-                sliderInput(inputId = "cutoff",
-                            label = "Binding Score Cutoff",
-                            min = 0, max = 1000,
-                            value = 500,
-                            round=TRUE)
+            conditionalPanel (condition = "input.cutoffType != 'auto'",
+                              sliderInput(inputId = "cutoff",
+                                          label = "Binding Score Cutoff",
+                                          min = 0, max = 1000,
+                                          value = 500,
+                                          round=TRUE)
             ),
 
             selectInput(inputId = "cellLines",
@@ -55,13 +54,13 @@ fluidPage(
                       choices=as.character(c(NA, unique(cellLines$Tissue.Diagnosis))),
                       selected= "NA")
         ),
+        uiOutput("targetSelector"),
         fileInput(inputId = "degFiles",
                   label = "Upload your differentially expressed gene table, should be in .tsv format",
                   multiple = FALSE,
-                  accept = c(
-                      "text/tsv",
-                      "text/comma-separated-values,text/plain",
-                      ".tsv")),
+                  accept = c("text/tsv",
+                             "text/comma-separated-values,text/plain",
+                             ".tsv")),
         numericInput(inputId = "p.thresh",
                      label = "p-Value Threshold",
                      value = 0.05,
@@ -86,11 +85,18 @@ fluidPage(
 
     ),
     mainPanel(
-        rcytoscapejsOutput("graph") %>% withSpinner(color="#0dc5c1"),
+        rcytoscapejsOutput("graph") %>%
+          withSpinner(color="#3498DB", type=8),
         ## Working interface for single output
+        sliderInput(inputId = "numTargets",
+                    label = "Targets to Display",
+                    min = 1, max = 25,
+                    value = 10,
+                    round=TRUE),
         uiOutput("tableTitle"),
         uiOutput("downloadButton"),
-        DT::dataTableOutput("table") %>% withSpinner(color="#0dc5c1")
+        DT::dataTableOutput("table") %>%
+          withSpinner(color="#3498DB", type = 8)
         ## Dropping attempt at tab functionality for now
         ## uiOutput("tabs") %>% withSpinner(color="#0dc5c1")
     )

@@ -83,14 +83,14 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
     else {
         ChIPlist <- readRDS(rdsFN)
     }
-    if(!is.na(cellLineType)) {
+    if(!is.na(cellLineType[1])) {
         if(!is.na(cellLineDiagnosis)) {
             cellLinesTemp <- findCellLines(cellLineType, cellLineDiagnosis)
         }
         else {
             cellLinesTemp <- findCellLines(cellLineType)
         }
-        if(!is.na(cellLines)) {
+        if(!is.na(cellLines[1])) {
             cellLines <- c(cellLinesTemp, cellLines)
             cellLines <- unique(cellLines)
         }
@@ -98,7 +98,7 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
             cellLines <- cellLinesTemp
         }
     }
-    if(!is.na(cellLines)) {
+    if(!is.na(cellLines[1])) {
         ChIPlist <- filterByCellLine(ChIPlist, cellLines)
     }
     if(writeToFile==TRUE) {

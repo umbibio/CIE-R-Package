@@ -52,7 +52,7 @@ require(RColorBrewer)
 #'                 ChIP1ap$filteredChIP.rels, degs)
 
 createCytoGraph <- function(enrichment, ents, rels, DEGs, p.thresh=0.05,
-                            fc.thresh = log(1.5), numProt=5, ids=NA) {
+                            fc.thresh = log(1.5), numProt=5, ids=NA, numTargets=10) {
     print("Starting Graph Generation")
     if(class(ents) != "data.frame" &&
        class(rels) != "data.frame") {
@@ -62,7 +62,8 @@ createCytoGraph <- function(enrichment, ents, rels, DEGs, p.thresh=0.05,
        class(DEGs) == "data.frame") {
         print("Data type detected")
         createCytoGraphHelper(enrichment, ents, rels, DEGs, p.thresh=p.thresh,
-                              fc.thresh = fc.thresh, numProt=numProt, ids=ids)
+                              fc.thresh = fc.thresh, numProt=numProt, ids=ids,
+                              numTargets=numTargets)
     }
     else if(class(enrichment) == "list" &&
             class(enrichment[[1]]) == "list" &&
@@ -75,7 +76,8 @@ createCytoGraph <- function(enrichment, ents, rels, DEGs, p.thresh=0.05,
                                       p.thresh = p.thresh, fc.thresh = fc.thresh,
                                       method = names(enrichment)[x],
                                       condition = names(enrichment[[x]])[y],
-                                      numProt = numProt, ids=ids) } ) } )
+                                      numProt = numProt, ids=ids,
+                                      numTargets=numTargets) } ) } )
     }
     else if(class(enrichment) == "list" &&
             class(enrichment[[1]]) == "data.frame" &&
@@ -85,7 +87,8 @@ createCytoGraph <- function(enrichment, ents, rels, DEGs, p.thresh=0.05,
             createCytoGraphHelper(enrichment = enrichment[[x]],
                                   ents = ents, rels = rels, p.thresh = p.thresh,
                                   fc.thresh=fc.thresh, DEG= DEGs[[x]],
-                                  condition=names(enrichment)[x], numProt=numProt, ids=ids) }  )
+                                  condition=names(enrichment)[x], numProt=numProt, ids=ids,
+                                  numTargets=numTargets) }  )
     }
     else if(class(enrichment) == "list" &&
             class(enrichment[[1]]) == "data.frame" &&
@@ -96,21 +99,21 @@ createCytoGraph <- function(enrichment, ents, rels, DEGs, p.thresh=0.05,
                                   ents = ents, rels = rels, p.thresh = p.thresh,
                                   fc.thresh=fc.thresh, DEG= DEGs,
                                   method=names(enrichment)[x], numProt=numProt,
-                                  ids=ids) }  )
+                                  ids=ids, numTargets=numTargets) }  )
    }
 }
 createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
                                   p.thresh, fc.thresh, method=NA,
-                                  condition=NA, numProt, ids) {
+                                  condition=NA, numProt, ids, numTargets) {
 
     print("Starting Analysis")
-    if(!is.na(ids)) {
+    if(!is.na(ids[1])) {
         sigProt <- enrichment$uid[ids]
     }
     else {
         sigProt <- enrichment$uid[1:numProt]
     }
-    if(nrow(sigProt) == 0) {
+    if(length(sigProt) == 0) {
         returnString <- paste("No significant proteins found.",
                               "For Method: ", method,
                               " and condition: ", condition)
@@ -147,7 +150,7 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
         sigEnts <- ents[ents$id %in% sigDEG$id,]
         sigRels <- rels[(rels$srcuid %in% sigProt), ]
         sigEntsTempUIDs <- lapply(sigProt, function(x) {
-           helpFuncTop10bypVal(x, sigEnts, sigRels, sigDEG) })
+           helpFuncTopbypVal(x, sigEnts, sigRels, sigDEG, numTargets) })
 
         sigEntsTempUIDs <- unique(unlist(sigEntsTempUIDs))
         sigEnts <- ents[sigEntsTempUIDs,]
@@ -194,15 +197,15 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
         rcytoscapejs(network$nodes, network$edges, showPanzoom=FALSE)
     }
 }
-helpFuncTop10bypVal <- function(sigProtein, sigEnts, sigRels, sigDEG) {
+helpFuncTopbypVal <- function(sigProtein, sigEnts, sigRels, sigDEG, numTargets) {
   tarRels <- sigRels %>% dplyr::filter(srcuid == sigProtein)
   targs <- tarRels$trguid
   sigTarg <- targs[targs %in% sigEnts$uid]
-  if(length(sigTarg) > 10) {
+  if(length(sigTarg) > numTargets) {
     sortTable <- sigEnts[sigEnts$uid %in% sigTarg, ] %>%
       dplyr::mutate(pVal = sigDEG$pval[sigDEG$id %in% id]) %>%
       dplyr::select(uid, pVal) %>% dplyr::arrange(pVal)
-    sortTable <- sortTable[1:10,]
+    sortTable <- sortTable[1:numTargets,]
     sortTable$uid
   }
   else{ sigTarg }
