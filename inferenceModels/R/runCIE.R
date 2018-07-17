@@ -157,7 +157,7 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "trrust"),
             stop("Please provide a file where the BHLH TFs can be found")
         }
     }
-    if(!is.na(targetsOfInterest)) {
+    if(!is.na(targetsOfInterest[1])) {
         if(length(targetsOfInterest) >= 1) {
             sigRels <- rels %>% dplyr::filter(ents$name[trguid] %in% targetsOfInterest)
 
@@ -211,9 +211,11 @@ runEnrichment <- function(ents, rels, DEGtable, verbose, hypTabs, method) {
             enrichment <- enrichment %>% arrange(.[[index]])
         }
         else {
-            index2 <- sapply(c("adj", "up"), function(x) {grep(x, colnames(enrichment))})
+            index2 <- sapply("up", function(x) {grep(x, colnames(enrichment))})
+            index3 <- sapply("adj", function(x) {grep(x, colnames(enrichment))})
             index2 <- unlist(index2)
-            indexFinal <- index[!(index %in% index2)]
+            index3 <- unlist(index3)
+            indexFinal <- index[(!(index %in% index2) && (index %in% index3))]
             enrichment <- enrichment %>% arrange(.[[indexFinal]])
         }
     }
