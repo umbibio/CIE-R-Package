@@ -64,31 +64,41 @@ require(xlsx)
 #' 
 filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
                             cellLineType=NA, cellLineDiagnosis = NA,
-                            outFileName = NA, writeToFile=TRUE) {
-    rdsFN <- paste("../data/chip-atlas-", distance, "kb.rds", sep = "")
+                            outFileName = NA, writeToFile=TRUE, databaseDir=NA) {
+    rdsFN <- paste("chip-atlas-", distance, "kb.rds", sep="")
+    if(is.na(databaseDir) & !file.exists(rdsFN)) {
+        stop(paste("Please provide a directory where the cellLines.rds file and",
+                   " chip-atlas-*kb.rds files can be found or place the files in your",
+                   " current working directory"))
+    }
+    else if(!is.na(databaseDir)) {
+        rdsFN <- paste(databaseDir, "chip-atlas-", distance, "kb.rds", sep = "")
+    }
     if(!file.exists(rdsFN)) {
-        folderName <- paste("chip-atlas-", distance, "kb/", sep = "")
-        tsvFiles <- list.files(folderName)
-        ChIPlist <- list(1:length(tsvFiles))
-        index <- 1;
-        for(f in tsvFiles) {
-            ChIPlist[[index]] <- read_tsv(paste(folderName, f, sep =""))
-            names(ChIPlist)[index] <- strsplit(f, "\\.")[[1]][1]
-            ChIPlist[[index]] <- cbind(names(ChIPlist)[index], ChIPlist[[index]])
-            colnames(ChIPlist[[index]])[1] <- "TF"
-            index <- index + 1
-        }
-        saveRDS(ChIPlist, rdsFN)
+        stop(paste("The directory you specified either does not exist or does not contain",
+                   "the required files"))
     }
-    else {
-        ChIPlist <- readRDS(rdsFN)
-    }
+    ## if(!file.exists(rdsFN)) {
+    ##     folderName <- paste("chip-atlas-", distance, "kb/", sep = "")
+    ##     tsvFiles <- list.files(folderName)
+    ##     ChIPlist <- list(1:length(tsvFiles))
+    ##     index <- 1;
+    ##     for(f in tsvFiles) {
+    ##         ChIPlist[[index]] <- read_tsv(paste(folderName, f, sep =""))
+    ##         names(ChIPlist)[index] <- strsplit(f, "\\.")[[1]][1]
+    ##         ChIPlist[[index]] <- cbind(names(ChIPlist)[index], ChIPlist[[index]])
+    ##         colnames(ChIPlist[[index]])[1] <- "TF"
+    ##         index <- index + 1
+    ##     }
+    ##     saveRDS(ChIPlist, rdsFN)
+    ## }
+    ChIPlist <- readRDS(rdsFN)
     if(!is.na(cellLineType[1])) {
         if(!is.na(cellLineDiagnosis)) {
-            cellLinesTemp <- findCellLines(cellLineType, cellLineDiagnosis)
+            cellLinesTemp <- findCellLines(cellLineType, cellLineDiagnosis, databaseDir)
         }
         else {
-            cellLinesTemp <- findCellLines(cellLineType)
+            cellLinesTemp <- findCellLines(cellLineType, databaseDir=databaseDir)
         }
         if(!is.na(cellLines[1])) {
             cellLines <- c(cellLinesTemp, cellLines)
@@ -370,12 +380,19 @@ filterByCellLine <- function(ChIPlist, cellLines) {
 }
 
 
-findCellLines <- function(cellLinePTtype, cellLineDiagnosis = NA) {
-    rdsFN <- "../data/cellLines.rds"
+findCellLines <- function(cellLinePTtype, cellLineDiagnosis = NA, databaseDir) {
+    rdsFN <- "cellLines.rds"
+    if(is.na(databaseDir) & !file.exists(rdsFN)) {
+        stop(paste("Please provide a directory where the cellLines.rds file and",
+                   " chip-atlas-*kb.rds files can be found or place the files in your",
+                   " current working directory"))
+    }
+    else if(!is.na(databaseDir)) {
+        rdsFN <- paste(databaseDir, rdsFN, sep = "")
+    }
     if(!file.exists(rdsFN)) {
-        cellTypeDatabase <- read.xlsx("cellLines.xlsx", sheetIndex=1, stringsAsFactors=F)
-        saveRDS(cellTypeDatabase, rdsFN)
-        gc()
+        stop(paste("The directory you specified either does not exist or does not contain",
+                   "the required files"))
     }
     else {
         cellTypeDatabase <- readRDS(rdsFN)
