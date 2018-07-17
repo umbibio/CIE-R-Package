@@ -12,7 +12,7 @@ require(xlsx)
 #' @description Given selection parameters, retrieve a portion of the ChIP Atlas database in the
 #' format of an .ents and a .rels file, which are useful for network and graph generation.
 #'
-#' @usage readChIPAtlas(distance, cutoff, cutoffType, cellLines = NA, cellLineType=NA, cellLineDiagnosis = NA, outFileName = NA, writeToFile=TRUE)
+#' @usage readChIPAtlas(distance, cutoff, cutoffType, cellLines = NA, cellLineType=NA, cellLineDiagnosis = NA, outFileName = NA, writeToFile=TRUE, databaseDir=NA)
 #'
 #' @param distance A number, either 1, 5, or 10 which indicates what distance (in kb)
 #' from the transcription start site should be considered.
@@ -42,6 +42,9 @@ require(xlsx)
 #'
 #' @param writeToFile A boolean value, determining whether the output will be returned to
 #' the environment or written to file (FALSE and TRUE, respectively.  Default to TRUE
+#'
+#' @param databaseDir The path to the folder containing cellLines.rds and chip-atlas-*kb.rds.  The
+#' function will search the current working directory if one is not provided.
 #' 
 #' @return Writes two files to disk, one with the file type .ents, which is the recorded entries
 #' from the database that passed the filters specified, and one with the file type .rels, which

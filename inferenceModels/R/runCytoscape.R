@@ -8,7 +8,8 @@ require(RColorBrewer)
 #' by this pipeline
 #'
 #' @usage createCytoGraph(enrichment, ents, rels, DEGs, p.thresh=0.05,
-#'                            fc.thresh = log(1.5), numProt=5, ids=NA)
+#'                        fc.thresh = log(1.5), numProt=5, ids=NA,
+#'                        numTargets=10)
 #' @param enrichment The enrichment tables from the analysis pipeline.  Can be a list
 #' of lists (multiple methods and conditions) or a list (multiple conditions, one
 #' method), or a single data frame
@@ -27,8 +28,12 @@ require(RColorBrewer)
 #' differentially expressed genes for enrichment analysis
 #'
 #' @param numProt The number of protiens, ranked by p.value from enrichment, to include
+#' 
 #' @param ids Row indices of the regulators you wish to be included in the plot
 #'
+#' @param numTargets The number of targets of each top regulator to show.  Please note that the
+#' number of targets plotted may be smaller than you expect, due to overlap.
+#' 
 #' @return Opens a browser window with the graph, green = proteins, purple = mRNA
 #'
 #' @export
