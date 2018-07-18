@@ -215,7 +215,8 @@ runEnrichment <- function(ents, rels, DEGtable, verbose, hypTabs, method) {
             index3 <- sapply("adj", function(x) {grep(x, colnames(enrichment))})
             index2 <- unlist(index2)
             index3 <- unlist(index3)
-            indexFinal <- index[(!(index %in% index2) && (index %in% index3))]
+            indexFinal <- index[!(index %in% index2)]
+            indexFinal <- indexFinal[index %in% index3]
             enrichment <- enrichment %>% arrange(.[[indexFinal]])
         }
     }
