@@ -179,9 +179,9 @@ writeRelsEnts <- function(ChIPdata, outFileName, writeToFile) {
                                  stringsAsFactors = F)
     ChIP.ents.TF$name <- as.character(ChIP.ents.TF$name)
     
-    XX <- select(org.Hs.eg.db, ChIP.ents.TF$name,
+    XX <- AnnotationDbi::select(org.Hs.eg.db, ChIP.ents.TF$name,
                  columns=c("SYMBOL", "ENTREZID"), keytype = "SYMBOL")
-    YY <- select(org.Hs.eg.db, keys=as.character(ChIP.ents.mRNA$name),
+    YY <- AnnotationDbi::select(org.Hs.eg.db, keys=as.character(ChIP.ents.mRNA$name),
                  columns=c("SYMBOL", "ENTREZID"), keytype = "SYMBOL")
 
     YY <- YY %>% distinct(SYMBOL, .keep_all = T)

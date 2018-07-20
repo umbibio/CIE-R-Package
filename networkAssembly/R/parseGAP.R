@@ -1,4 +1,5 @@
 require(readr)
+require(dplyr)
 datasets.file <- '../../GAP/datasets.csv'
 
 
@@ -69,13 +70,27 @@ DEG.dat.hasDEG <- DEG.dat %>% filter(src %in% hasDEG$src & isDEG)
 
 ## generate single perturbation DEG files for quaternaryprod usage
 DEG.dat.hasDEG.isTF <- DEG.dat.hasDEG %>% filter(isTF)
-out.dir <- '../../SinglePertubation/'
-for(gene in unique(DEG.dat.hasDEG.isTF$src)){
-  file.name = paste(out.dir, gene, '.txt', sep = '')
-  tmp <- DEG.dat.hasDEG %>% filter(src == gene) %>% transmute(Entrez = trg_id, pvalue = pval, FoldChange = fc)
-  write.table(tmp, file.name, col.names = T, row.names = F, quote = F, sep = '\t')
-}
+#out.dir <- '../../SinglePertubation/'
+#for(gene in unique(DEG.dat.hasDEG.isTF$src)){
+#  file.name = paste(out.dir, gene, '.txt', sep = '')
+#  tmp <- DEG.dat.hasDEG %>% filter(src == gene) %>% transmute(Entrez = trg_id, pvalue = pval, FoldChange = fc)
+#  write.table(tmp, file.name, col.names = T, row.names = F, quote = F, sep = '\t')
+#}
 
+source("../CIE/inferenceModels/R/runCIE.R")
+source("../CIE/inferenceModels/R/runCytoscape.R")
+source("../CIE/networkAssembly/R/filterChIP.R")
 
+ChIP5ave500 <- filterChIPAtlas(5, 500, "average", writeToFile = FALSE, databaseDir = './data/')
+ents <- ChIP5ave500$filteredChIP.ents
+rels <- ChIP5ave500$filteredChIP.rels
 
+ents.tf <- ents %>% dplyr::filter(type == 'Protein')
+ents.mRNA <- ents %>% dplyr::filter(type == 'mRNA')
 
+rels <- left_join(rels, ents.tf, by = c('srcuid' = 'uid'))
+rels <- left_join(rels, ents.mRNA, by = c('trguid' = 'uid'))
+ChIP.targs <- rels %>% dplyr::transmute(src = name.x, chip.trg = name.y)
+GPA <- DEG.dat.hasDEG.isTF %>% dplyr::transmute(src = src, gpa.trg = target)
+ChIP.GPA <- inner_join(ChIP.targs, GPA, by = 'src') %>% arrange(src) %>% group_by(src) %>%
+  summarise(n1 = length(unique(chip.trg)), n2 = length(unique(gpa.trg)), n3 = sum(unique(chip.trg) %in% unique(gpa.trg)))
