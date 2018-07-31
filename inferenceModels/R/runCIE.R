@@ -1,6 +1,10 @@
 require(QuaternaryProd)
 require(fdrtool)
 require(dplyr)
+require(doParallel)
+require(parallel)
+require(multidplyr)
+require(rjson)
 
 #' Run Causual Inference Enrichment
 #'
@@ -159,11 +163,14 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "trrust"),
     }
     if(!is.na(targetsOfInterest[1])) {
         if(length(targetsOfInterest) >= 1) {
-            sigRels <- rels %>% dplyr::filter(ents$name[trguid] %in% targetsOfInterest)
+            relsTarg <- readRDS("../CIE/data/relsForTarg.rds")
+            entsTarg <- readRDS("../CIE/data/entsForTarg.rds")
+            sigRels <- relsTarg %>%
+                dplyr::filter(entsTarg$name[trguid] %in% targetsOfInterest)
 
             colTitle <- paste(targetsOfInterest, collapse = "_")
             colTitle <- paste("targets", colTitle, sep = "_")
-            ents <- ents %>% dplyr::mutate(colTitle = ents$uid %in% sigRels$srcuid)
+            ents <- ents %>% dplyr::mutate(colTitle = ents$name %in% sigRels$name)
             colnames(ents)[which(colnames(ents) == "colTitle")] = colTitle
         }
     }
@@ -198,6 +205,7 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "trrust"),
     print("Complete!")
     return(enrichment)
 }
+
 runEnrichment <- function(ents, rels, DEGtable, verbose, hypTabs, method) {
     if(hypTabs == 1) {
         enrichment <- generateHypTabs(ents, rels, DEGtable, verbose=verbose,
@@ -211,12 +219,10 @@ runEnrichment <- function(ents, rels, DEGtable, verbose, hypTabs, method) {
             enrichment <- enrichment %>% arrange(.[[index]])
         }
         else {
-            index2 <- sapply("up", function(x) {grep(x, colnames(enrichment))})
-            index3 <- sapply("adj", function(x) {grep(x, colnames(enrichment))})
-            index2 <- unlist(index2)
-            index3 <- unlist(index3)
+            index2 <-grep("up", colnames(enrichment))
+            index3 <- grep("adj", colnames(enrichment))
             indexFinal <- index[!(index %in% index2)]
-            indexFinal <- indexFinal[index %in% index3]
+            indexFinal <- indexFinal[indexFinal %in% index3]
             enrichment <- enrichment %>% arrange(.[[indexFinal]])
         }
     }
@@ -232,16 +238,94 @@ runEnrichment <- function(ents, rels, DEGtable, verbose, hypTabs, method) {
             enrichment <- enrichment %>% arrange(.[[index]])
         }
         else {
-            index2 <- sapply("up", function(x) {grep(x, colnames(enrichment))})
-            index3 <- sapply("adj", function(x) {grep(x, colnames(enrichment))})
-            index2 <- unlist(index2)
-            index3 <- unlist(index3)
+            index2 <-grep("up", colnames(enrichment))
+            index3 <- grep("adj", colnames(enrichment))
             indexFinal <- index[!(index %in% index2)]
             indexFinal <- indexFinal[indexFinal %in% index3]
             enrichment <- enrichment %>% arrange(.[[indexFinal]])
         }
     }
 
+}
+#' Pathway Enrichment
+#' @description Gets enriched pathways from the Reactome database using their analysis
+#' service
+#' 
+#' @usage pathwayEnrichment <- function(sigProtiens, numPathways=10)
+#' 
+#' @param sigProtiens A vector of protein names, intended to be used with the names column
+#' of the enrichment table returned by runCIE().  It is also suggested that you filter
+#' the results of enrichment by p-value so that you do not have insignificant protiens
+#' in your analysis.
+#' 
+#' @param numPathways The number of pathways to pull from Reactome, defaults to `10
+#' 
+#' @return A single data frame or list of dataframes  consisting of the pathway,
+#' it's p-value and fdr from analysis
+#' using the Reactome analysis service, and the list of proteins given in sigProtiens found
+#' in the pathway.
+#' 
+#' @export
+#'
+#' @examples
+#' 
+
+pathwayEnrichment <- function(sigProtiens, numPathways=10) {
+    if(length(sigProtiens[[1]]) == 1) {
+        enrichment <- pathwayEnrichmentHelper(sigProtiens, numPathways)
+    }
+    else if(length(sigProtiens[[1]]) > 1 &&
+       length(sigProtiens[[1]][[1]]) == 1) {
+        enrichment <- lapply(sigProtiens, function(x) {
+            pathwayEnrichmentHelper(x, numPathways)
+        } )
+        names(enrichment) <- names(sigProtiens)
+    }
+    else if(length(sigProtiens[[1]]) > 1 &&
+            length(sigProtiens[[1]][[1]]) > 1 &&
+            length(sigProtiens[[1]][[1]][[1]])) {
+        enrichment <- lapply(sigProtiens, function(x) {
+            enrList <- lapply(x, function(y) {
+                pathwayEnrichmentHelper(x, numPathways) } )
+            names(enrList) <- names(x)
+            enrList
+        } )
+    }
+    enrichment
+    
+}
+pathwayEnrichmentHelper <- function(sigProtiens, numPathways) {
+    write(sigProtiens, "proteins.txt")
+    analysis <- fromJSON(system(paste("curl -H 'Content-Type: text/plain' --data-binary",
+                             " @proteins.txt -X POST --url https://reactome.org/",
+                             "AnalysisService/identifiers/projection/\\?pageSize\\=",
+                             numPathways, "\\&page\\=1", sep=""), intern=TRUE,
+                             ignore.stderr=TRUE))
+    system("rm proteins.txt")
+    numPaths <- length(analysis$pathways)
+    tableOut <- data.frame(name = sapply(1:numPaths,
+                                         function(x) {analysis$pathways[[x]]$name}),
+                           pValue = sapply(1:numPaths,
+                                           function(x) {
+                                               analysis$pathways[[x]]$entities$pValue}),
+                           fdr = sapply(1:numPaths,
+                                        function(x) {analysis$pathways[[x]]$entities$fdr}))
+    
+    pathwayIds <- unlist(lapply(1:length(analysis$pathways),
+                                function (x) { analysis$pathways[[x]][[2]] }))
+    protiensFound <- sapply(pathwayIds, function(x) {
+        reactions <- fromJSON(system(paste("curl https://reactome.org/AnalysisService/",
+                                           "token/", analysis$summary$token,
+                                           "/summary/", x,
+                                           sep = ""), intern=TRUE,
+                                     ignore.stderr=TRUE))
+        ids <- unlist(lapply(reactions$identifiers, function(x) {x[1]}))
+        sigProtiens[sigProtiens %in% ids] } )
+    tableOut <- tableOut %>%
+        dplyr::mutate(protiensFound = sapply(1:length(protiensFound),
+                                             function(x) {
+                                                 paste(protiensFound[[x]], collapse="; ")}))
+    
 }
 
 ## The following protion of code was written by Dr. Kourosh Zarringhalam, presented here
@@ -371,12 +455,23 @@ runCRE <- function(npp, npm, npz, nmp, nmm, nmz, nrp, nrm, nrz, nzp, nzm, nzz,
 
 generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
                             method = c("Ternary","Quaternary","Enrichment","Fisher")){
-  
-  method = match.arg(method)
-  ents.mRNA = ents[which(ents$type == 'mRNA'), ]
 
-  D <- left_join(rels, evidence, by = c('trguid' = 'uid'))
-  D <- D %>% group_by(srcuid) %>% 
+    numCores <- detectCores()
+    method = match.arg(method)
+    ents.mRNA = ents[which(ents$type == 'mRNA'), ]
+    
+    D <- left_join(rels, evidence, by = c('trguid' = 'uid'))
+    cluster <- create_cluster(cores=numCores, quiet=TRUE)
+    intoGroups <- suppressWarnings(D %>% partition(srcuid, cluster=cluster))
+    
+    intoGroups %>%
+        cluster_assign_value("evidence", evidence) %>%
+        cluster_assign_value("D", D) %>%
+        cluster_assign_value("rels", rels) 
+    pb <- txtProgressBar(min=0, max=10,
+                         initial="1", char="=", width=NA,
+                         style=3, file="")
+  D <- intoGroups %>% 
     summarise(
       npp = sum(val == 1 & type == 'increase', na.rm=T),
       npm = sum(val == -1 & type == 'increase', na.rm=T),
@@ -401,26 +496,57 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
       significant.ambiguous = sum(val != 0 & type == 'conflict', na.rm=T),
       unreachable = length(unique(D$trguid[!(D$trguid %in% trguid)])),
       total.genes = length(unique(rels$trguid)),
-      total.sig.genes = sum(evidence$val != 0, na.rm = T))
-  
-  if(method %in% c("Enrichment","Fisher")){
-    D <- D %>% rowwise() %>% 
-      mutate(pval = runCRE(npp, npm, npz, nmp, nmm, nmz, nrp, nrm, nrz, nzp, nzm, nzz, 
-                           direction = 'up', method = method))
+      total.sig.genes = sum(evidence$val != 0, na.rm = T)) %>%
+      collect()
+    rm(intoGroups)
+    invisible(gc())
+    setTxtProgressBar(pb, 5)
     
-    D <- D %>% mutate(adj.pval = p.adjust(pval, method = 'fdr'))
+    if(method %in% c("Enrichment","Fisher")){
+      cluster2 <- parallel::makeCluster(numCores, type="PSOCK")
+      registerDoParallel(cluster2)
+      cluster2 %>% cluster_assign_value("runCRE", runCRE) %>%
+          cluster_assign_value("D", D) %>%
+          cluster_assign_value("method", method) 
+      
+      D <- D %>% mutate(pval = foreach(i = 1:nrow(D), .combine = c) %dopar% {
+          runCRE(D$npp[i], D$npm[i], D$npz[i], D$nmp[i], D$nmm[i], D$nmz[i],
+                 D$nrp[i], D$nrm[i], D$nrz[i], D$nzp[i], D$nzm[i],
+                 D$nzz[i], direction = 'up', method = method) } )
+      parallel::stopCluster(cluster2)
+      registerDoParallel()
+      invisible(gc())
+      library(stats)
+      D <- D %>% mutate(adj.pval = stats::p.adjust(pval, method = 'fdr'))
+
+      setTxtProgressBar(pb, 10)
     
-  }else{
-    D <- D %>% rowwise() %>% 
-      mutate(
-        pval.up = runCRE(npp, npm, npz, nmp, nmm, nmz, nrp, nrm, nrz, nzp, nzm, nzz,
-                         direction = 'up', method = method),
-        pval.down = runCRE(npp, npm, npz, nmp, nmm, nmz, nrp, nrm, nrz, nzp, nzm, nzz,
-                           direction = 'down', method = method))
-    D <- D %>% mutate(adj.pval.up = p.adjust(pval.up,method = 'fdr'),
+    }else{
+      cluster2 <- parallel::makeCluster(numCores, type="PSOCK")
+      registerDoParallel(cluster2)
+      cluster2 %>% cluster_assign_value("runCRE", runCRE) %>%
+          cluster_assign_value("D", D) %>%
+          cluster_assign_value("method", method) %>%
+          cluster_assign_value("QP_Pvalue", QP_Pvalue)
+      
+      D <- D %>% mutate(pval.up = foreach(i = 1:nrow(D), .combine = c) %dopar% {
+          runCRE(D$npp[i], D$npm[i], D$npz[i], D$nmp[i], D$nmm[i], D$nmz[i],
+                 D$nrp[i], D$nrm[i], D$nrz[i], D$nzp[i], D$nzm[i],
+                 D$nzz[i], direction = 'up', method = method) } )
+      D <- D %>% mutate(pval.down = foreach(i = 1:nrow(D), .combine = c) %dopar% {
+          runCRE(D$npp[i], D$npm[i], D$npz[i], D$nmp[i], D$nmm[i], D$nmz[i],
+                 D$nrp[i], D$nrm[i], D$nrz[i], D$nzp[i], D$nzm[i],
+                 D$nzz[i], direction = 'down', method = method) } )
+      parallel::stopCluster(cluster2)
+      registerDoParallel()
+      invisible(gc())
+      D <- D %>% mutate(adj.pval.up = p.adjust(pval.up,method = 'fdr'),
                         adj.pval.down = p.adjust(pval.down,method = 'fdr'))
+      
+      setTxtProgressBar(pb, 10)
   }
-  
+
+  close(pb)
   D <- inner_join(ents, D, by = c('uid' = 'srcuid'))
   
   return(D)

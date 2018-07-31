@@ -5,6 +5,7 @@ library(shinycssloaders)
 library(rcytoscapejs)
 
 cellLines <- readRDS("../data/cellLines.rds")
+targets <- readRDS("./targets.rds")
 ## Using fluid bootstrap layour
 fluidPage(
 
@@ -54,7 +55,12 @@ fluidPage(
                       choices=as.character(c(NA, unique(cellLines$Tissue.Diagnosis))),
                       selected= "NA")
         ),
-        uiOutput("targetSelector"),
+          selectInput(inputId = "targetsOfInterest",
+                      label = "Show if the Protien Targets Selected Genes",
+                      choices = c(NA, targets),
+                      selected = NA,
+                      multiple = TRUE),
+
         fileInput(inputId = "degFiles",
                   label = "Upload your differentially expressed gene table, should be in .tsv format",
                   multiple = FALSE,
@@ -82,21 +88,24 @@ fluidPage(
                       label = "Include whether a protein is a BHLH in enrichment results",
                       value = TRUE),
         actionButton("run", "Run analysis")
+        ## actionButton("cancel", "Cancel")
 
     ),
     mainPanel(
         rcytoscapejsOutput("graph") %>%
           withSpinner(color="#3498DB", type=8),
         ## Working interface for single output
-        sliderInput(inputId = "numTargets",
-                    label = "Targets to Display",
-                    min = 1, max = 25,
-                    value = 10,
-                    round=TRUE),
+        uiOutput("targSlider"), 
+        actionButton("pathEnr", "Run pathway enrichment"),
         uiOutput("tableTitle"),
         uiOutput("downloadButton"),
-        DT::dataTableOutput("table") %>%
-          withSpinner(color="#3498DB", type = 8)
+        tabsetPanel(
+          tabPanel("Analysis", DT::dataTableOutput("table") %>%
+                     withSpinner(color="#3498DB", type = 8)),
+          tabPanel("Pathway Enrichment", DT::dataTableOutput("pathways") %>%
+                     withSpinner(color="#3498DB", type = 8)) 
+        )
+        
         ## Dropping attempt at tab functionality for now
         ## uiOutput("tabs") %>% withSpinner(color="#0dc5c1")
     )
