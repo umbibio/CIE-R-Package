@@ -70,17 +70,11 @@ server <- function(input, output) {
     rValEnrichment$process <- NULL
     rValEnrichment$msg <- NULL
     
-    degs <- reactive({
-      req(input$degFiles)
-      if(length(input$degFiles$datapath) > 1) {
-        degs <- lapply(input$degFiles$datapath, function(x) {
-          read.table(x, header=T, sep="\t") } )
-      }
-      else {
-        degs <- read.table(input$degFiles$datapath, header=T, sep="\t")
-      }
+    degs <- eventReactive(input$run, {
+      degs <- read.table(input$degFiles$datapath, header=T, sep="\t")
+      degs
     })
-    observeEvent(input$run, {
+    observeEvent({input$run}, {
         req(input$databaseType)
         if(input$cutoffType == "auto") {
             cutoff=NA
@@ -142,37 +136,50 @@ server <- function(input, output) {
             rValEntsRels$msg = "Loaded from file"
         }
     })
-    
     observeEvent(rValEntsRels$process, {
-        degs <- degs()
-        if(is.null(rValEntsRels$result[[1]])) {
-            entsRels <- suppressWarnings(isolate(mccollect(rValEntsRels$process$pid)))
-            entsRels <- entsRels[[1]]
-            names(entsRels) <- c("ents", "rels")
-            rValEntsRels$result <- entsRels
-        }
-        else{
-            entsRels <- rValEntsRels$result
-        }
-        rValEnrichment$result <- NULL
-        rValEnrichment$process <- mcparallel({ 
-            isolate(helperFunctionTable(input, entsRels$ents, entsRels$rels, degs))
-        })
-        rValEnrichment$msg <- paste("Process",
-                                    rValEnrichment$process$pid,
-                                    "started")
-        print("Started enrichment process")
+      if(is.null(rValEntsRels$result[[1]])) {
+        entsRels <- suppressWarnings(isolate(mccollect(rValEntsRels$process$pid)))
+        entsRels <- entsRels[[1]]
+        names(entsRels) <- c("ents", "rels")
+        rValEntsRels$result <- entsRels
+      }
     })
-    observeEvent(rValEnrichment$process, {
-        rValEnrichment$result <- suppressWarnings(isolate(mccollect(rValEnrichment$process$pid)))
-        rValEnrichment$result <- rValEnrichment$result[[1]]
-        rValEnrichment$process <- NULL
-        rValEnrichment$msg <- paste("Process for enrichment completed!")
-        print("Process for enrichment completed!")
+    enrichment <- reactive({
+      req(rValEntsRels$result)
+      entsRels <- rValEntsRels$result
+      degs <- degs()
+      isolate(helperFunctionTable(input, entsRels$ents, entsRels$rels, degs))
     })
+    ## observeEvent({rValEntsRels$process}, {
+    ##     degs <- degs()
+    ##     if(is.null(rValEntsRels$result[[1]])) {
+    ##         entsRels <- suppressWarnings(isolate(mccollect(rValEntsRels$process$pid)))
+    ##         entsRels <- entsRels[[1]]
+    ##         names(entsRels) <- c("ents", "rels")
+    ##         rValEntsRels$result <- entsRels
+    ##     }
+    ##     else{
+    ##         entsRels <- rValEntsRels$result
+    ##     }
+    ##     rValEnrichment$result <- NULL
+    ##     rValEnrichment$process <- mcparallel({ 
+    ##         isolate(helperFunctionTable(input, entsRels$ents, entsRels$rels, degs))
+    ##     })
+    ##     rValEnrichment$msg <- paste("Process",
+    ##                                 rValEnrichment$process$pid,
+    ##                                 "started")
+    ##     print("Started enrichment process")
+    ## })
+    ## observeEvent({rValEnrichment$process}, {
+    ##     rValEnrichment$result <- suppressWarnings(isolate(mccollect(rValEnrichment$process$pid)))
+    ##     rValEnrichment$result <- rValEnrichment$result[[1]]
+    ##     rValEnrichment$process <- NULL
+    ##     rValEnrichment$msg <- paste("Process for enrichment completed!")
+    ##     print(head(rValEnrichment$result))
+    ##     print("Process for enrichment completed!")
+    ## })
     
-    ## observeEvent(input$cancel,  {
-    ##   print("test")
+    ## eventReactive({input$cancel},  {
     ##     if(!is.null(rValEntsRels$process$pid)) {
     ##         tools::pskill(rValEntsRels$process$pid)
     ##         rValEnrichment$msg <-paste("Process",
@@ -192,17 +199,28 @@ server <- function(input, output) {
     ##         rValEnrichment$result=NULL
     ##     }
     ## })
-    output$pathways <- DT::renderDataTable({
-      req(rValEnrichment$result)
+    output$pathButton <- renderUI({
+      req(enrichment())
       req(input$table_rows_selected)
+      actionButton("pathEnr", "Run pathway enrichment")
+    })
+    output$pathsToShow <- renderUI({
+      req(input$pathEnr)
+      req(enrichment())
+      req(input$table_rows_selected)
+      sliderInput(inputId = "pathsToDisplay",
+                  label = "Choose How Many Paths to Display",
+                  min = 0, max = 100,
+                  value = 10,
+                  round=TRUE)
+    })
+    output$pathwaysTable <- DT::renderDataTable({
+      req(input$pathsToDisplay)
       prot <- rValEnrichment$result$name[input$table_rows_selected]
-      print(prot)
-      pEnr <- pathwayEnrichment(prot)
-      
-      DT::datatable(pEnr)
+      pEnr <- pathwayEnrichment(prot, input$pathsToDisplay)
     })
     output$table <- DT::renderDataTable({
-        req(rValEnrichment$result)
+        req(enrichment())
         table <- withProgress(message="Calculating Enrichment\n",
                               detail = "\nThis may take some time",
                               expr = {
@@ -210,6 +228,8 @@ server <- function(input, output) {
                                   index <- grep("pval|pvalue|p.value|p-value|p-val|p.val",
                                                 colnames(enrichment))
                                   index <- unlist(index)
+                                  index2 <- grep("adj", colnames(enrichment))
+                                  index <- index[index %in% index2]
                                   if(length(index) == 1) {
                                       table <- enrichment %>%
                                           dplyr::select(c(name,
@@ -238,64 +258,34 @@ server <- function(input, output) {
                  input$databaseType))
     })
     maxSlider <- reactive({
-        req(rValEnrichment$result)
-        req(rValEntsRels$result)
+        req(enrichment())
         req(input$table_rows_selected)
-        degs <- degs()
-        entsRels <- rValEntsRels$result
-        ents <- entsRels$ents
-        rels <- entsRels$rels
-        enrichment <- rValEnrichment$result
         ids <- input$table_rows_selected
-        ## Code written by Dr. Kourosh Zarringhalam
-        pval.ind = grep('qval|q.val|q-val|q-val|P-value|P.value|pvalue|pval|Pval',
-                        colnames(degs), ignore.case = T)
-        fc.ind = grep('fc|FC|fold|FoldChange', colnames(degs), ignore.case = T)
-        id.ind = grep('id|entr|Entrez', colnames(degs), ignore.case = T)
-        
-        if(length(id.ind) == 0 | length(fc.ind) == 0 | length(pval.ind) == 0){
-            stop('Please make sure the expression files column names are labled as entrez, fc, pvalue')
-        }
-            
-        colnames(degs)[pval.ind] <- 'pvalue'
-        colnames(degs)[fc.ind] <- 'foldchange'
-        colnames(degs)[id.ind] <- 'id'
-        
-        sigDEG <- degs %>% filter(abs(foldchange) >= input$fc.thresh & 
-                                    pvalue <= input$p.thresh) %>%
-            transmute(id = id, val = ifelse(foldchange > 0, 1, -1), pval = pvalue) %>%
-                distinct(id, .keep_all = T)
-        
-        ## End Dr. Zarringhalam cotde
-        sigProt <- enrichment$uid[ids]
-        sigEnts <- ents[ents$id %in% sigDEG$id, ]
-        sigRels <- rels[rels$srcuid %in% sigProt, ]
-        numTarg <- sapply(sigProt, function(x) {
-            tarRels <- sigRels %>% dplyr::filter(srcuid == x)
-            targs <- sigRels$trguid
-            targs <- targs[targs %in% sigEnts$uid]
-            length(targs)
-        })
+        numTarg <- enrichment()$significant.reachable[ids]
         if(max(numTarg) > 100) {
-          100
+            100
         }
         else {
-          max(numTarg)
+            max(numTarg)
         }
     })
     output$targSlider <- renderUI({
-      req(rValEnrichment$result)
-      req(maxSlider())
-      sliderInput(inputId = "numTargets",
-                  label = "Targets to Display",
-                  min = 1, max = maxSlider(),
-                  value = 10,
-                  round=TRUE)
+        req(enrichment())
+        req(maxSlider())
+       
+        rValEnrichment$result <- enrichment()
+        
+        sliderInput(inputId = "numTargets",
+                    label = "Targets to Display",
+                    min = 1, max = maxSlider(),
+                    value = 10,
+                    round=TRUE)
     })
     output$graph <- renderRcytoscapejs({
         req(input$numTargets)
-        req(rValEnrichment$result)
+        req(enrichment())
         req(rValEntsRels$result)
+        rValEnrichment$result <- enrichment()
         degs <- degs()
         entsRels <- rValEntsRels$result
         enrichment <- rValEnrichment$result
@@ -303,10 +293,10 @@ server <- function(input, output) {
         createCytoGraph(enrichment, entsRels$ents, entsRels$rels, degs,
                         ids=input$table_rows_selected,
                         numTargets=input$numTargets)
-        
     })
     output$downloadButton <- renderUI({
-        req(rValEnrichment$result)
+        req(enrichment())
+        rValEnrichment$result <- enrichment()
         downloadButton('download', label="Download Full Table")
     })
     output$download <- downloadHandler(

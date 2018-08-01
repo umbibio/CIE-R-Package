@@ -170,7 +170,7 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "trrust"),
 
             colTitle <- paste(targetsOfInterest, collapse = "_")
             colTitle <- paste("targets", colTitle, sep = "_")
-            ents <- ents %>% dplyr::mutate(colTitle = ents$name %in% sigRels$name)
+            ents <- ents %>% dplyr::mutate(colTitle = ents$uid %in% sigRels$srcuid)
             colnames(ents)[which(colnames(ents) == "colTitle")] = colTitle
         }
     }
@@ -272,26 +272,25 @@ runEnrichment <- function(ents, rels, DEGtable, verbose, hypTabs, method) {
 
 pathwayEnrichment <- function(sigProtiens, numPathways=10) {
     if(length(sigProtiens[[1]]) == 1) {
-        enrichment <- pathwayEnrichmentHelper(sigProtiens, numPathways)
+        pathEnr <- pathwayEnrichmentHelper(sigProtiens, numPathways)
     }
     else if(length(sigProtiens[[1]]) > 1 &&
        length(sigProtiens[[1]][[1]]) == 1) {
-        enrichment <- lapply(sigProtiens, function(x) {
+        pathEnr <- lapply(sigProtiens, function(x) {
             pathwayEnrichmentHelper(x, numPathways)
         } )
-        names(enrichment) <- names(sigProtiens)
+        names(pathEnr) <- names(sigProtiens)
     }
     else if(length(sigProtiens[[1]]) > 1 &&
             length(sigProtiens[[1]][[1]]) > 1 &&
             length(sigProtiens[[1]][[1]][[1]])) {
-        enrichment <- lapply(sigProtiens, function(x) {
+        pathEnr <- lapply(sigProtiens, function(x) {
             enrList <- lapply(x, function(y) {
                 pathwayEnrichmentHelper(x, numPathways) } )
             names(enrList) <- names(x)
-            enrList
-        } )
+            enrList } )
     }
-    enrichment
+    pathEnr
     
 }
 pathwayEnrichmentHelper <- function(sigProtiens, numPathways) {

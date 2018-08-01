@@ -95,14 +95,17 @@ fluidPage(
         rcytoscapejsOutput("graph") %>%
           withSpinner(color="#3498DB", type=8),
         ## Working interface for single output
-        uiOutput("targSlider"), 
-        actionButton("pathEnr", "Run pathway enrichment"),
-        uiOutput("tableTitle"),
-        uiOutput("downloadButton"),
+        column(6, uiOutput("targSlider")),
+        column(6, uiOutput("pathsToShow")),
+        
+        column(12, uiOutput("tableTitle")),
+        column(6, uiOutput("downloadButton")),
+        column(6, uiOutput("pathButton")),
+        
         tabsetPanel(
           tabPanel("Analysis", DT::dataTableOutput("table") %>%
                      withSpinner(color="#3498DB", type = 8)),
-          tabPanel("Pathway Enrichment", DT::dataTableOutput("pathways") %>%
+          tabPanel("Pathway Enrichment", DT::dataTableOutput("pathwaysTable") %>%
                      withSpinner(color="#3498DB", type = 8)) 
         )
         
