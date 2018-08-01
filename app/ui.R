@@ -87,7 +87,7 @@ fluidPage(
         checkboxInput(inputId = "useBHLH",
                       label = "Include whether a protein is a BHLH in enrichment results",
                       value = TRUE),
-        actionButton("run", "Run analysis")
+        actionButton("run", "Run analysis"),
         ## actionButton("cancel", "Cancel")
 
     ),
@@ -95,17 +95,15 @@ fluidPage(
         rcytoscapejsOutput("graph") %>%
           withSpinner(color="#3498DB", type=8),
         ## Working interface for single output
-        uiOutput("targSlider"), 
-        actionButton("pathEnr", "Run pathway enrichment"),
+        sliderInput(inputId = "numTargets",
+                    label = "Targets to Display",
+                    min = 1, max = 100,
+                    value = 10,
+                    round=TRUE),
         uiOutput("tableTitle"),
         uiOutput("downloadButton"),
-        tabsetPanel(
-          tabPanel("Analysis", DT::dataTableOutput("table") %>%
-                     withSpinner(color="#3498DB", type = 8)),
-          tabPanel("Pathway Enrichment", DT::dataTableOutput("pathways") %>%
-                     withSpinner(color="#3498DB", type = 8)) 
-        )
-        
+        DT::dataTableOutput("table") %>%
+          withSpinner(color="#3498DB", type = 8)
         ## Dropping attempt at tab functionality for now
         ## uiOutput("tabs") %>% withSpinner(color="#0dc5c1")
     )
