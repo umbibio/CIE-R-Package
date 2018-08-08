@@ -9,7 +9,7 @@ library("utils")
 library("shinyjs")
 ## library("reactomeVisualizer")
 
-helperFunctionTable <- function(input, ents, rels, degs) {
+helperFunctionTable <- function(input, ents, rels, degs, progress) {
     enrichment <- runCIE(NULL, NULL, DEGs = degs,
                          p.thresh = input$p.thresh,
                          fc.thresh = log(input$fc.thresh),
@@ -23,7 +23,9 @@ helperFunctionTable <- function(input, ents, rels, degs) {
                          BHLHFN = "../data/BHLH_TFs.txt",
                          hypTabs="1",
                          verbose=F,
-                         databaseDir = "../data/")
+                         databaseDir = "../data/",
+                         expectProgressObject=TRUE,
+                         progress=progress)
     ## Code which will display the enrichment given that only one output has been
     ## provided, which is the case due to minor changes in the interface.
     enrichment
@@ -119,9 +121,15 @@ server <- function(input, output, session) {
         degs
     })
 
+    progress <- reactiveValues()
+    progress$result <- NULL
+
     ## Get ents rels
     observeEvent({input$run}, {
         req(input$databaseType)
+        progress$result <- shiny::Progress$new()
+        progress$result$set(message="Preparing network for enrichment analysis",
+                             value=0)
         if(input$cutoffType == "auto") {
             cutoff=NA
         }
@@ -186,20 +194,25 @@ server <- function(input, output, session) {
     # Collect ents rels (if processed, not read)
     observeEvent(rValEntsRels$process, {
       if(is.null(rValEntsRels$result[[1]])) {
-        entsRels <- suppressWarnings(isolate(mccollect(rValEntsRels$process$pid)))
-        entsRels <- entsRels[[1]]
-        names(entsRels) <- c("ents", "rels")
-        rValEntsRels$result <- entsRels
+          entsRels <- suppressWarnings(isolate(mccollect(rValEntsRels$process$pid)))
+          entsRels <- entsRels[[1]]
+          names(entsRels) <- c("ents", "rels")
+          rValEntsRels$result <- entsRels
       }
     })
 
     ##Get enrichment
     enrichment <- reactive({
-      req(rValEntsRels$result)
-      entsRels <- rValEntsRels$result
-      degs <- degs()
-      isolate(helperFunctionTable(input, entsRels$ents, entsRels$rels, degs))
-    })
+        req(rValEntsRels$result)
+        value <- progress$result$getValue()
+        value <- value + ((progress$result$getMax() - value) / 10)
+        progress$result$set(message="Preparing DGE files to run Enrichment",
+                             value=value)
+        entsRels <- rValEntsRels$result
+        degs <- degs()
+        on.exit(progress$result$close())
+        isolate(helperFunctionTable(input, entsRels$ents, entsRels$rels, degs, progress$result))
+     })
 
     ## Render pathway enrichment button
     output$pathButton <- renderUI({
@@ -241,34 +254,29 @@ server <- function(input, output, session) {
     ## Render enrichment
     output$table <- DT::renderDataTable({
         req(enrichment())
-        table <- withProgress(message="Calculating Enrichment\n",
-                              detail = "\nThis may take some time",
-                              expr = {
-                                  enrichment <- enrichment()
-                                  index <- grep("pval|pvalue|p.value|p-value|p-val|p.val",
-                                                colnames(enrichment))
-                                  index <- unlist(index)
-                                  index2 <- grep("adj", colnames(enrichment))
+        enrichment <- enrichment()
+        index <- grep("pval|pvalue|p.value|p-value|p-val|p.val",
+                      colnames(enrichment))
+        index <- unlist(index)
+        index2 <- grep("adj", colnames(enrichment))
                                   index <- index[!(index %in% index2)]
-                                  if(length(index) == 1) {
-                                      table <- enrichment %>%
-                                          dplyr::select(c(name,
-                                                          total_targets = total.reachable,
-                                                          significant_targets = significant.reachable,
-                                                          index))
-                                  }
-                                  else {
-                                      table <- enrichment %>%
-                                          dplyr::select(c(name,
-                                                          total_targets = total.reachable,
-                                                          significant_targets = significant.reachable,
-                                                          index[1], index[2]))
-                                  }
-                                  rownames(table) <- enrichment$uid
-                                  DT::datatable(table, selection=list(mode='multiple',
-                                                                      selected=1:5))
-                                  })
-        table
+        if(length(index) == 1) {
+            table <- enrichment %>%
+                dplyr::select(c(name,
+                                total_targets = total.reachable,
+                                significant_targets = significant.reachable,
+                                index))
+        }
+        else {
+            table <- enrichment %>%
+                dplyr::select(c(name,
+                                total_targets = total.reachable,
+                                significant_targets = significant.reachable,
+                                index[1], index[2]))
+        }
+        rownames(table) <- enrichment$uid
+        DT::datatable(table, selection=list(mode='multiple',
+                                            selected=1:5))  
     })
 
     ## Title analysis
@@ -353,7 +361,10 @@ server <- function(input, output, session) {
         contentType = "application/zip"
     )
     
-    
+    output$description <- renderUI({
+        tags$h3("Running CIE on Your Own Machine")
+        tags$p(paste("Running CIE on your own ", sep=""))
+    })
     
     
     

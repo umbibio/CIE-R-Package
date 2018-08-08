@@ -137,7 +137,7 @@ navbarPage("CIE",
                                 downloadButton('downloadCompr', 'Download')
                             ),
                             mainPanel(
-                                tableOutput('tableDownload')
+                                uiOutput("description")
                             )
                         )
                     )
