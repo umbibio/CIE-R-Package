@@ -59,8 +59,8 @@ require(RColorBrewer)
 createCytoGraph <- function(enrichment, ents, rels, DEGs, p.thresh=0.05,
                             fc.thresh = log(1.5), numProt=5, ids=NA, numTargets=10) {
     print("Starting Graph Generation")
-    if(class(ents) != "data.frame" &&
-       class(rels) != "data.frame") {
+    if(length(ents[[1]]) <= 1 ||
+       length(rels[[1]]) <= 1) {
         stop("Please make sure that the provied ents and rels tables are data.frames")
     }
     if(class(enrichment) == "data.frame" &&
@@ -151,17 +151,23 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
             distinct(id, .keep_all = T)
 
         ## End Dr. Zarringhalam code
-
-        sigEnts <- ents[ents$id %in% sigDEG$id,]
+        sigEnts <- ents %>% dplyr::filter((id %in% sigDEG$id), (type=="mRNA")) 
+        
         sigRels <- rels[(rels$srcuid %in% sigProt), ]
+
+        sigEnts <- sigEnts %>%
+            dplyr::mutate(pVal = sigDEG$pval[sigDEG$id %in% sigEnts$id])
+
         sigEntsTempUIDs <- lapply(sigProt, function(x) {
-           helpFuncTopbypVal(x, sigEnts, sigRels, sigDEG, numTargets) })
+           helpFuncTopbypVal(x, sigEnts, sigRels, numTargets) })
 
         sigEntsTempUIDs <- unique(unlist(sigEntsTempUIDs))
         sigEnts <- ents[sigEntsTempUIDs,]
 
-        sigEnts <- rbind(ents[sigProt,], sigEnts)
+
         sigRels <- sigRels[sigRels$trguid %in% sigEnts$uid, ]
+        sigEnts <- rbind(ents[sigProt,], sigEnts)
+ 
 
         mRNAfc <- sigEnts %>%
           dplyr::filter(type == "mRNA") %>%
@@ -202,16 +208,15 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
         rcytoscapejs(network$nodes, network$edges, showPanzoom=FALSE)
     }
 }
-helpFuncTopbypVal <- function(sigProtein, sigEnts, sigRels, sigDEG, numTargets) {
+helpFuncTopbypVal <- function(sigProtein, sigEnts, sigRels, numTargets) {
   tarRels <- sigRels %>% dplyr::filter(srcuid == sigProtein)
   targs <- tarRels$trguid
   sigTarg <- targs[targs %in% sigEnts$uid]
   if(length(sigTarg) > numTargets) {
     sortTable <- sigEnts[sigEnts$uid %in% sigTarg, ] %>%
-      dplyr::mutate(pVal = sigDEG$pval[sigDEG$id %in% id]) %>%
-      dplyr::select(uid, pVal) %>% dplyr::arrange(pVal)
-    sortTable <- sortTable[1:numTargets,]
-    sortTable$uid
+        dplyr::arrange(pVal) %>%
+        dplyr::select(uid) 
+    sortTable$uid[1:numTargets]
   }
   else{ sigTarg }
 }

@@ -222,7 +222,7 @@ runEnrichment <- function(ents, rels, DEGtable, verbose, hypTabs, method) {
             index2 <-grep("up", colnames(enrichment))
             index3 <- grep("adj", colnames(enrichment))
             indexFinal <- index[!(index %in% index2)]
-            indexFinal <- indexFinal[indexFinal %in% index3]
+            indexFinal <- indexFinal[!(indexFinal %in% index3)]
             enrichment <- enrichment %>% arrange(.[[indexFinal]])
         }
     }
@@ -241,7 +241,7 @@ runEnrichment <- function(ents, rels, DEGtable, verbose, hypTabs, method) {
             index2 <-grep("up", colnames(enrichment))
             index3 <- grep("adj", colnames(enrichment))
             indexFinal <- index[!(index %in% index2)]
-            indexFinal <- indexFinal[indexFinal %in% index3]
+            indexFinal <- indexFinal[!(indexFinal %in% index3)]
             enrichment <- enrichment %>% arrange(.[[indexFinal]])
         }
     }
@@ -273,6 +273,7 @@ runEnrichment <- function(ents, rels, DEGtable, verbose, hypTabs, method) {
 pathwayEnrichment <- function(sigProtiens, numPathways=10) {
     if(length(sigProtiens[[1]]) == 1) {
         pathEnr <- pathwayEnrichmentHelper(sigProtiens, numPathways)
+        pathEnr
     }
     else if(length(sigProtiens[[1]]) > 1 &&
        length(sigProtiens[[1]][[1]]) == 1) {
@@ -280,6 +281,7 @@ pathwayEnrichment <- function(sigProtiens, numPathways=10) {
             pathwayEnrichmentHelper(x, numPathways)
         } )
         names(pathEnr) <- names(sigProtiens)
+        pathEnr
     }
     else if(length(sigProtiens[[1]]) > 1 &&
             length(sigProtiens[[1]][[1]]) > 1 &&
@@ -289,8 +291,8 @@ pathwayEnrichment <- function(sigProtiens, numPathways=10) {
                 pathwayEnrichmentHelper(x, numPathways) } )
             names(enrList) <- names(x)
             enrList } )
+        pathEnr
     }
-    pathEnr
     
 }
 pathwayEnrichmentHelper <- function(sigProtiens, numPathways) {
@@ -302,7 +304,9 @@ pathwayEnrichmentHelper <- function(sigProtiens, numPathways) {
                              ignore.stderr=TRUE))
     system("rm proteins.txt")
     numPaths <- length(analysis$pathways)
-    tableOut <- data.frame(name = sapply(1:numPaths,
+    tableOut <- data.frame(id = sapply(1:numPaths,
+                                       function(x) {analysis$pathways[[x]]$dbId}),
+                           name = sapply(1:numPaths,
                                          function(x) {analysis$pathways[[x]]$name}),
                            pValue = sapply(1:numPaths,
                                            function(x) {
@@ -468,8 +472,9 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
         cluster_assign_value("D", D) %>%
         cluster_assign_value("rels", rels) 
     pb <- txtProgressBar(min=0, max=10,
-                         initial="1", char="=", width=NA,
+                         initial="0", char="=", width=NA,
                          style=3, file="")
+    setTxtProgressBar(pb, 0)
   D <- intoGroups %>% 
     summarise(
       npp = sum(val == 1 & type == 'increase', na.rm=T),
@@ -539,8 +544,8 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
       parallel::stopCluster(cluster2)
       registerDoParallel()
       invisible(gc())
-      D <- D %>% mutate(adj.pval.up = p.adjust(pval.up,method = 'fdr'),
-                        adj.pval.down = p.adjust(pval.down,method = 'fdr'))
+      D <- D %>% mutate(adj.pval.up = p.adjust(pval.up, method = 'fdr'),
+                        adj.pval.down = p.adjust(pval.down, method = 'fdr'))
       
       setTxtProgressBar(pb, 10)
   }
