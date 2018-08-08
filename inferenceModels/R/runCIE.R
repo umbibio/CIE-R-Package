@@ -172,8 +172,16 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "trrust"),
     }
     if(!is.na(targetsOfInterest[1])) {
         if(length(targetsOfInterest) >= 1) {
-            relsTarg <- readRDS("../CIE/data/relsForTarg.rds")
-            entsTarg <- readRDS("../CIE/data/entsForTarg.rds")
+            if(is.na(databaseDir)) {
+                relsTarg <- readRDS("../CIE/data/relsForTarg.rds")
+                entsTarg <- readRDS("../CIE/data/entsForTarg.rds")
+            }
+            else {
+                relsTarg <- readRDS(paste(databaseDir, "relsForTarg.rds",
+                                          sep=""))
+                entsTarg <- readRDS(paste(databaseDir, "entsForTarg.rds",
+                                          sep=""))
+            }
             sigRels <- relsTarg %>%
                 dplyr::filter(entsTarg$name[trguid] %in% targetsOfInterest)
 
@@ -532,7 +540,7 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
     }
     else {
         value <- progress$getValue()
-        value <- value + 4*((progress$getMax() - value) / 10)        
+        value <- value + 2*((progress$getMax() - value) / 10)        
         progress$set(message="Calculating p-values",
                              value=6)
     }
@@ -542,12 +550,14 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
       registerDoParallel(cluster2)
       cluster2 %>% cluster_assign_value("runCRE", runCRE) %>%
           cluster_assign_value("D", D) %>%
-          cluster_assign_value("method", method) 
+          cluster_assign_value("method", method) %>%
+          cluster_assign_value("QP_Pvalue", QP_Pvalue) %>%
+          cluster_assign_value("fisher.test", fisher.test)
       
       D <- D %>% mutate(pval = foreach(i = 1:nrow(D), .combine = c) %dopar% {
           runCRE(D$npp[i], D$npm[i], D$npz[i], D$nmp[i], D$nmm[i], D$nmz[i],
                  D$nrp[i], D$nrm[i], D$nrz[i], D$nzp[i], D$nzm[i],
-                 D$nzz[i], direction = 'up', method = method) } )
+                 D$nzz[i], method = method) } )
       parallel::stopCluster(cluster2)
       registerDoParallel()
       invisible(gc())
