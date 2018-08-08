@@ -17,7 +17,9 @@ require(rjson)
 #'                               filteredDataName=NA, ents=NA, rels=NA, useFile=TRUE,
 #'                               useMart=FALSE, useBHLH=FALSE, martFN=NA, BHLHFN=NA,
 #'                               targetsOfInterest=NA
-#'                               hypTabs= c("1", "2"), verbose=T, databaseDir = NA)
+#'                               hypTabs= c("1", "2"), verbose=T, databaseDir = NA,
+#'                               expectProgressObject=FALSE,
+#'                               progress=NA)
 #' @param databaseType Currently we only support selecting one database at a time.  Using
 #' this option and having the database automatically loaded for you only currently works
 #' if your working directory is the folder where this script exists in the package.  You
@@ -72,6 +74,11 @@ require(rjson)
 #'
 #' @param databaseDir The path where the .rels and .ents files for a given Database type
 #' can be found.
+#'
+#' @param expectProgressObject Boolean, a switch to use a shiny progress bar instead of
+#' text progress bar.
+#'
+#' @param progress Optional parameter, specifying a shiny progress bar to be updated.
 #' 
 #' @return Either a single data frame or list of data frames, depending on the number of
 #' methods and DEGs provided, which contain the enrichment results (if a list, they are
@@ -103,7 +110,9 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "trrust"),
                    filteredDataName=NA, ents=NA, rels=NA, useFile=TRUE,
                    useMart=FALSE, useBHLH=FALSE, martFN=NA, BHLHFN=NA,
                    targetsOfInterest=NA,
-                   hypTabs= c("1", "2"), verbose=T, databaseDir = NA) {
+                   hypTabs= c("1", "2"), verbose=T, databaseDir = NA,
+                   expectProgressObject=FALSE,
+                   progress=NA) {
     hypTabs = match.arg(hypTabs)
     if(useFile) {
         if(!filter & is.na(filteredDataName)) {
@@ -186,30 +195,35 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "trrust"),
     if(length(methods) > 1 & class(DEGs.E) == "list") {
         enrichment <- lapply(methods, function(x) {
             lapply(DEGs.E, function(y) {
-                runEnrichment(ents, rels, y, verbose, hypTabs, x) } ) } )
+                runEnrichment(ents, rels, y, verbose, hypTabs, x, expectProgressObject,
+                              progress) } ) } )
         names(enrichment) <- methods
     }
     else if(length(methods) > 1 & class(DEGs.E) == "data.frame") {
         enrichment <- lapply(methods, function(x) {
-            runEnrichment(ents, rels, DEGs.E, verbose, hypTabs, x)
+            runEnrichment(ents, rels, DEGs.E, verbose, hypTabs, x, progress)
         } )
         names(enrichment) <- methods
     }
     else if(length(methods) == 1 & class(DEGs.E) == "list") {
         enrichment <- lapply(DEGs.E, function(x) {
-            runEnrichment(ents, rels, x, verbose, hypTabs, methods) } )
+            runEnrichment(ents, rels, x, verbose, hypTabs, methods, expectProgressObject,
+                          progress) } )
     }
     else {
-        enrichment <- runEnrichment(ents, rels, DEGs.E, verbose, hypTabs, methods)
+        enrichment <- runEnrichment(ents, rels, DEGs.E, verbose, hypTabs,
+                                    methods, expectProgressObject,
+                                    progress)
     }
     print("Complete!")
     return(enrichment)
 }
 
-runEnrichment <- function(ents, rels, DEGtable, verbose, hypTabs, method) {
+runEnrichment <- function(ents, rels, DEGtable, verbose, hypTabs, method, expectProgressObject,
+                          progress) {
     if(hypTabs == 1) {
         enrichment <- generateHypTabs(ents, rels, DEGtable, verbose=verbose,
-                                      method = method)
+                                      method = method, expectProgressObject, progress)
         index <- grep("pval|pvalue|p.value|p-value|p-val|p.val", colnames(enrichment))
         index <- unlist(index)
         if(length(index) == 0) {
@@ -457,7 +471,8 @@ runCRE <- function(npp, npm, npz, nmp, nmm, nmz, nrp, nrm, nrz, nzp, nzm, nzz,
 
 
 generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
-                            method = c("Ternary","Quaternary","Enrichment","Fisher")){
+                            method = c("Ternary","Quaternary","Enrichment","Fisher"),
+                            expectProgressObject, progress){
 
     numCores <- detectCores()
     method = match.arg(method)
@@ -470,41 +485,57 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
     intoGroups %>%
         cluster_assign_value("evidence", evidence) %>%
         cluster_assign_value("D", D) %>%
-        cluster_assign_value("rels", rels) 
-    pb <- txtProgressBar(min=0, max=10,
-                         initial="0", char="=", width=NA,
-                         style=3, file="")
-    setTxtProgressBar(pb, 0)
-  D <- intoGroups %>% 
-    summarise(
-      npp = sum(val == 1 & type == 'increase', na.rm=T),
-      npm = sum(val == -1 & type == 'increase', na.rm=T),
-      npz = sum(val == 0 & type == 'increase', na.rm=T),
-      nmp = sum(val == 1 & type == 'decrease', na.rm=T),
-      nmm = sum(val == -1 & type == 'decrease', na.rm=T),
-      nmz = sum(val == 0 & type == 'decrease', na.rm=T),
-      nrp = sum(val == 1 & type == 'conflict', na.rm=T),
-      nrm = sum(val == -1 & type == 'conflict', na.rm=T),
-      nrz = sum(val == 0 & type == 'conflict', na.rm=T),
-      nzp = sum(evidence$val[match(unique(D$trguid[!(D$trguid %in% trguid)]), evidence$uid)] == 1, na.rm = T),
-      nzm = sum(evidence$val[match(unique(D$trguid[!(D$trguid %in% trguid)]), evidence$uid)] == -1, na.rm = T),
-      nzz = sum(evidence$val[match(unique(D$trguid[!(D$trguid %in% trguid)]), evidence$uid)] == 0, na.rm = T),
-      correct.pred = 
-        sum((val == 1 & type == 'increase') | (val == -1 & type == 'decrease') 
-            | (val != 0 & type == 'conflict'), na.rm=T),
-      incorrect.pred = 
-        sum((val == -1 & type == 'increase') | (val == 1 & type == 'decrease') , na.rm=T),
-      total.reachable = n(),
-      significant.reachable = sum(val != 0, na.rm=T),
-      total.ambiguous = length(type == 'conflict'),
-      significant.ambiguous = sum(val != 0 & type == 'conflict', na.rm=T),
-      unreachable = length(unique(D$trguid[!(D$trguid %in% trguid)])),
-      total.genes = length(unique(rels$trguid)),
-      total.sig.genes = sum(evidence$val != 0, na.rm = T)) %>%
-      collect()
+        cluster_assign_value("rels", rels)
+    if(!expectProgressObject) {
+        pb <- txtProgressBar(min=0, max=10,
+                             initial="0", char="=", width=NA,
+                             style=3, file="")
+        setTxtProgressBar(pb, 0)
+    }
+    else {
+        value <- progress$getValue()
+        value <- value + ((progress$getMax() - value) / 10)
+        progress$set(message="Running Enrichment",
+                             value=value)
+    }
+    D <- intoGroups %>% 
+        summarise(
+            npp = sum(val == 1 & type == 'increase', na.rm=T),
+            npm = sum(val == -1 & type == 'increase', na.rm=T),
+            npz = sum(val == 0 & type == 'increase', na.rm=T),
+            nmp = sum(val == 1 & type == 'decrease', na.rm=T),
+            nmm = sum(val == -1 & type == 'decrease', na.rm=T),
+            nmz = sum(val == 0 & type == 'decrease', na.rm=T),
+            nrp = sum(val == 1 & type == 'conflict', na.rm=T),
+            nrm = sum(val == -1 & type == 'conflict', na.rm=T),
+            nrz = sum(val == 0 & type == 'conflict', na.rm=T),
+            nzp = sum(evidence$val[match(unique(D$trguid[!(D$trguid %in% trguid)]), evidence$uid)] == 1, na.rm = T),
+            nzm = sum(evidence$val[match(unique(D$trguid[!(D$trguid %in% trguid)]), evidence$uid)] == -1, na.rm = T),
+            nzz = sum(evidence$val[match(unique(D$trguid[!(D$trguid %in% trguid)]), evidence$uid)] == 0, na.rm = T),
+            correct.pred = 
+                sum((val == 1 & type == 'increase') | (val == -1 & type == 'decrease') 
+                    | (val != 0 & type == 'conflict'), na.rm=T),
+            incorrect.pred = 
+                sum((val == -1 & type == 'increase') | (val == 1 & type == 'decrease') , na.rm=T),
+            total.reachable = n(),
+            significant.reachable = sum(val != 0, na.rm=T),
+            total.ambiguous = length(type == 'conflict'),
+            significant.ambiguous = sum(val != 0 & type == 'conflict', na.rm=T),
+            unreachable = length(unique(D$trguid[!(D$trguid %in% trguid)])),
+            total.genes = length(unique(rels$trguid)),
+            total.sig.genes = sum(evidence$val != 0, na.rm = T)) %>%
+        collect()
     rm(intoGroups)
     invisible(gc())
-    setTxtProgressBar(pb, 5)
+    if(!expectProgressObject) {
+        setTxtProgressBar(pb, 5)
+    }
+    else {
+        value <- progress$getValue()
+        value <- value + 4*((progress$getMax() - value) / 10)        
+        progress$set(message="Calculating p-values",
+                             value=6)
+    }
     
     if(method %in% c("Enrichment","Fisher")){
       cluster2 <- parallel::makeCluster(numCores, type="PSOCK")
@@ -523,7 +554,14 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
       library(stats)
       D <- D %>% mutate(adj.pval = stats::p.adjust(pval, method = 'fdr'))
 
-      setTxtProgressBar(pb, 10)
+      if(!expectProgressObject) {
+          setTxtProgressBar(pb, 10)
+      }
+      else {
+          value <- progress$getMax()
+          progress$set(message="Complete!",
+                             value=value)
+      }
     
     }else{
       cluster2 <- parallel::makeCluster(numCores, type="PSOCK")
@@ -547,10 +585,20 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
       D <- D %>% mutate(adj.pval.up = p.adjust(pval.up, method = 'fdr'),
                         adj.pval.down = p.adjust(pval.down, method = 'fdr'))
       
-      setTxtProgressBar(pb, 10)
+      
+      if(!expectProgressObject) {
+          setTxtProgressBar(pb, 10)
+      }
+      else {
+          value <- progress$getMax()
+          progress$set(message="Complete!",
+                             value=value)
+      }
   }
 
-  close(pb)
+  if(!expectProgressObject) {
+      close(pb)
+  }
   D <- inner_join(ents, D, by = c('uid' = 'srcuid'))
   
   return(D)
