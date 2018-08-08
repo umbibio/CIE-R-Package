@@ -9,5 +9,4 @@ chip-atlas-1kb.rds
 mart_human_TFs.csv  
 string.rels  
 TRED.rels
-
-
+data/*
