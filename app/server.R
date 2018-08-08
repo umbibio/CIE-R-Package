@@ -6,6 +6,7 @@ library("stringr")
 library("DT")
 library("parallel")
 library("utils")
+library("shinyjs")
 ## library("reactomeVisualizer")
 
 helperFunctionTable <- function(input, ents, rels, degs) {
@@ -71,15 +72,51 @@ server <- function(input, output, session) {
     rValEntsRels$process <- NULL
     rValEntsRels$msg <- NULL
 
+    startEnr <- NULL
+
     ## Partially used code to store enrichment in a similar manner
-    rValEnrichment <- reactiveValues()
-    rValEnrichment$process <- NULL
-    rValEnrichment$msg <- NULL
+    ## rValEnrichment <- reactiveValues()
+    ## rValEnrichment$process <- NULL
+    ## rValEnrichment$msg <- NULL
+
+    observeEvent({input$run}, {
+        shinyjs::disable("run")
+        shinyjs::disable("method")
+        shinyjs::disable("fc.thresh")
+        shinyjs::disable("p.thresh")
+        shinyjs::disable("degFiles")
+        shinyjs::disable("targetsOfInterest")
+        shinyjs::disable("cellLineDiagnosis")
+        shinyjs::disable("cellLineType")
+        shinyjs::disable("cellLines")
+        shinyjs::disable("cutoffType")
+        shinyjs::disable("distance")
+        shinyjs::disable("databaseType")
+        shinyjs::disable("useBHLH")
+        shinyjs::disable("useMart")
+    })
+    observeEvent({enrichment()}, {
+        shinyjs::enable("run")
+        shinyjs::enable("method")
+        shinyjs::enable("fc.thresh")
+        shinyjs::enable("p.thresh")
+        shinyjs::enable("degFiles")
+        shinyjs::enable("targetsOfInterest")
+        shinyjs::enable("cellLineDiagnosis")
+        shinyjs::enable("cellLineType")
+        shinyjs::enable("cellLines")
+        shinyjs::enable("cutoffType")
+        shinyjs::enable("distance")
+        shinyjs::enable("databaseType")
+        shinyjs::enable("useBHLH")
+        shinyjs::enable("useMart")
+   
+    })
 
     ## Get degs
-    degs <- eventReactive(input$run, {
-      degs <- read.table(input$degFiles$datapath, header=T, sep="\t")
-      degs
+    degs <- eventReactive({input$run}, {
+        degs <- read.table(input$degFiles$datapath, header=T, sep="\t")
+        degs
     })
 
     ## Get ents rels
@@ -185,7 +222,7 @@ server <- function(input, output, session) {
     pEnr <- reactive({
         req(input$pathsToDisplay)
         print("Calculating pathway enrichment")
-        prot <- rValEnrichment$result$name[input$table_rows_selected]
+        prot <- enrichment()$name[input$table_rows_selected]
         pEnr <- pathwayEnrichment(prot, input$pathsToDisplay)      
     })
     
@@ -258,8 +295,6 @@ server <- function(input, output, session) {
         req(enrichment())
         req(maxSlider())
        
-        rValEnrichment$result <- enrichment()
-        
         sliderInput(inputId = "numTargets",
                     label = "Targets to Display",
                     min = 1, max = maxSlider(),
@@ -271,10 +306,9 @@ server <- function(input, output, session) {
         req(input$numTargets)
         req(enrichment())
         req(rValEntsRels$result)
-        rValEnrichment$result <- enrichment()
         degs <- degs()
         entsRels <- rValEntsRels$result
-        enrichment <- rValEnrichment$result
+        enrichment <- enrichment()
         req(input$table_rows_selected)
         createCytoGraph(enrichment, entsRels$ents, entsRels$rels, degs,
                         ids=input$table_rows_selected,
@@ -292,7 +326,6 @@ server <- function(input, output, session) {
     ## Download full table
     output$downloadButton <- renderUI({
         req(enrichment())
-        rValEnrichment$result <- enrichment()
         downloadButton('download', label="Download Full Table")
     })
     ## Server of files
@@ -301,7 +334,7 @@ server <- function(input, output, session) {
             paste(input$method, input$databaseType,
                   input$degFiles, ".tsv", sep="")
         },
-        content = function(file) {
+        content = function(filename) {
             write.table(enrichment(), filename, sep="\t",
                         row.names=FALSE, quote=FALSE)
         }

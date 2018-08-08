@@ -11,6 +11,7 @@ navbarPage("CIE",
            tabPanel("Analysis",
                     ## Using fluid bootstrap layout
                     fluidPage(
+                        useShinyjs(),
                         
                         ## Title the page
                         titlePanel("Causal Inference and Directional Enrichment Methods on Biological Networks"),
@@ -40,9 +41,10 @@ navbarPage("CIE",
                                 conditionalPanel (condition = "input.cutoffType != 'auto'",
                                                   sliderInput(inputId = "cutoff",
                                                               label = "Binding Score Cutoff",
-                                          min = 0, max = 1000,
-                                          value = 500,
-                                          round=TRUE)
+                                                              min = 0,
+                                                              max = 1000,
+                                                              value = 500,
+                                                              round=TRUE)
                                           ),
                                 
                                 selectInput(inputId = "cellLines",
