@@ -379,14 +379,18 @@ processDEGs <- function(DEGs, ents, rels, p.thresh = 0.05, fc.thresh = log(1.5))
   evidence <- evidence %>% filter(id %in% ents.mRNA$id)
   n.e2 = nrow(evidence)
   print(paste((n.e1-n.e2), "evidence removed!"))
-  
-  evidence <- rbind(evidence,
-                    data.frame(id = ents.mRNA$id[!(ents.mRNA$id %in% evidence$id)], val = 0))
+
+  map <- sapply(evidence$id, function(x) {
+      which(ents.mRNA$id %in% x)})
   
   ##Change id back to uid
   evidence <- evidence %>%
-      dplyr::mutate(uid = ents.mRNA$uid[which(ents.mRNA$id %in% id)]) %>%
+      dplyr::mutate(uid = ents.mRNA$uid[map]) %>%
       dplyr::select(uid, val)
+  
+  evidence <- rbind(evidence,
+                    data.frame(uid = ents.mRNA$uid[!(ents.mRNA$uid %in% evidence$uid)], val = 0))
+  
   return(evidence)
 }
     
@@ -541,7 +545,7 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
     }
     else {
         value <- progress$getValue()
-        value <- value + 2*((progress$getMax() - value) / 10)        
+        value <- value + 2*((progress$getMax() / 10) - value)        
         progress$set(message="Calculating p-values",
                              value=6)
     }
