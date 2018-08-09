@@ -372,7 +372,7 @@ processDEGs <- function(DEGs, ents, rels, p.thresh = 0.05, fc.thresh = log(1.5))
   colnames(evidence)[fc.ind] <- 'foldchange'
   colnames(evidence)[id.ind] <- 'id'
   
-  evidence <- evidence %>% filter(abs(foldchange) >= fc.thresh & pvalue <= p.thresh) %>%
+  evidence <- evidence %>% dplyr::filter(abs(foldchange) >= fc.thresh & pvalue <= p.thresh) %>%
     transmute(id = id, val = ifelse(foldchange > 0, 1, -1)) %>% distinct(id, .keep_all = T)
   
   n.e1 <- nrow(evidence)
@@ -384,8 +384,9 @@ processDEGs <- function(DEGs, ents, rels, p.thresh = 0.05, fc.thresh = log(1.5))
                     data.frame(id = ents.mRNA$id[!(ents.mRNA$id %in% evidence$id)], val = 0))
   
   ##Change id back to uid
-  evidence <- left_join(evidence, ents.mRNA, by = 'id') %>%
-    dplyr::select(uid, val)
+  evidence <- evidence %>%
+      dplyr::mutate(uid = ents.mRNA$uid[which(ents.mRNA$id %in% id)]) %>%
+      dplyr::select(uid, val)
   return(evidence)
 }
     
