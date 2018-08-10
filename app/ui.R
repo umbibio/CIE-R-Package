@@ -3,6 +3,7 @@ library(shiny)
 library(dplyr)
 library(shinycssloaders)
 library(rcytoscapejs)
+library(shinyjs)
 ## library("reactomeVisualizer")
 
 cellLines <- readRDS("../data/cellLines.rds")
