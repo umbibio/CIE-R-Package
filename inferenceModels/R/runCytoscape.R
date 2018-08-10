@@ -151,6 +151,7 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
             distinct(id, .keep_all = T)
 
         ## End Dr. Zarringhalam code
+        sigDEG <- sigDEG %>% filter(id %in% ents$id)
         sigEnts <- ents %>% dplyr::filter((id %in% sigDEG$id), (type=="mRNA")) 
         
         sigRels <- rels[(rels$srcuid %in% sigProt), ]
@@ -161,24 +162,26 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
         sigEntsTempUIDs <- lapply(sigProt, function(x) {
            helpFuncTopbypVal(x, sigEnts, sigRels, numTargets) })
 
+        sigDEG <- sigDEG %>%
+            dplyr::mutate(uid = sigEnts$uid[sigEnts$id %in% sigDEG$id])
+
         sigEntsTempUIDs <- unique(unlist(sigEntsTempUIDs))
-        sigEnts <- ents[sigEntsTempUIDs,]
+        sigEnts <- ents[ents$uid %in% sigEntsTempUIDs,]
+        sigEnts <- sigEnts %>%
+            dplyr::mutate(val = sigDEG$val[sigDEG$uid %in% sigEnts$uid])
+
 
 
         sigRels <- sigRels[sigRels$trguid %in% sigEnts$uid, ]
-        sigEnts <- rbind(ents[sigProt,], sigEnts)
+        sigEnts <- rbind(sigEnts, cbind(ents[ents$uid %in% sigProt,],
+                                        val = NA))
  
 
-        mRNAfc <- sigEnts %>%
-          dplyr::filter(type == "mRNA") %>%
-          dplyr::mutate(mRNAfc = sigDEG$val[sigDEG$id %in% id]) %>%
-          dplyr::select(mRNAfc)
-        mRNAfc <- mRNAfc$mRNAfc
-
+        mRNAfc <- sigEnts$val[!is.na(sigEnts$val)]
+        
         colorPal <- brewer.pal(11, "Spectral")
         type <- as.character(sigEnts$type)
 
-        mRNAfc <- c(rep(NA, length(sigProt)), mRNAfc)
         colorsNode <- sapply(1:length(type), function(x) {
           if(type[x] == "mRNA") {
             if(is.na(mRNAfc[x])) { "#7b7c7c" }

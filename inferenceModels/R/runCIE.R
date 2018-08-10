@@ -103,7 +103,7 @@ require(rjson)
 #' View(enrichment$Quaternary$cell_line_cxcl12_tgfb_evidence_edgeR.txt)
 #' 
 
-runCIE <- function(databaseType = c("TRED", "string", "ChIP", "trrust"),
+runCIE <- function(databaseType = c("TRED", "string", "ChIP", "TRRUST"),
                    filter = FALSE,
                    DEGs, p.thresh = 0.05, fc.thresh=log(1.5),
                    methods,
@@ -545,9 +545,9 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
     }
     else {
         value <- progress$getValue()
-        value <- value + 2*((progress$getMax() / 10) - value)        
+        value <- value + 4*((progress$getMax() / 10))        
         progress$set(message="Calculating p-values",
-                             value=6)
+                             value=value)
     }
     
     if(method %in% c("Enrichment","Fisher")){

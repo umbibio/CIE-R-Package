@@ -81,6 +81,20 @@ server <- function(input, output, session) {
     ## rValEnrichment$process <- NULL
     ## rValEnrichment$msg <- NULL
 
+    output$method <- renderUI({
+        req(input$databaseType)
+        if(input$databaseType %in% c("TRED", "ChIP")) {
+            default <- "Fisher"
+        } else {
+            default <- "Quaternary"    
+        }
+        selectInput(inputId = "method",
+                    label = "Method of Enrichment Analysis",
+                    choices = c("Ternary", "Quaternary",
+                                "Enrichment", "Fisher"),
+                    selected = default,
+                    multiple=FALSE)
+    })
     observeEvent({input$run}, {
         shinyjs::disable("run")
         shinyjs::disable("method")
