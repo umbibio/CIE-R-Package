@@ -241,7 +241,7 @@ server <- function(input, output, session) {
       req(input$table_rows_selected)
       sliderInput(inputId = "pathsToDisplay",
                   label = "Choose How Many Paths to Display",
-                  min = 0, max = 100,
+                  min = 1, max = 100,
                   value = 10,
                   round=TRUE)
     })
