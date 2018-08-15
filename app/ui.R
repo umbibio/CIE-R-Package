@@ -97,11 +97,13 @@ navbarPage("CIE",
                             tabsetPanel(
                               tabPanel("Graph of Regulators", 
                                        rcytoscapejsOutput("graph") %>%
-                                         withSpinner(color="#3498DB", type=8))
-                              ## tabPanel("Pathway Overview",
-                              ##          tags$div(id = "fireworksHolder"),
-                              ##          reactomeVisualizerOutput("pathwaysGraph") %>% 
-                              ##           withSpinner(color="#3498DB", type=8))
+                                         withSpinner(color="#3498DB", type=8)),
+                              tabPanel("Pathway Overview",
+                                       uiOutput("pathwayOverview") %>% 
+                                       withSpinner(color="#3498DB", type=8))
+                              
+                                       ## tags$div(id = "fireworksHolder"),
+                                       ## reactomeVisualizerOutput("pathwaysGraph")
                             ),
                             ## Working interface for single output
                             column(6, uiOutput("targSlider")),
@@ -112,14 +114,15 @@ navbarPage("CIE",
                             column(6, uiOutput("pathButton")),
                             
                             tabsetPanel(id="tables",
-                                tabPanel("Analysis", DT::dataTableOutput("table") %>%
-                                                     withSpinner(color="#3498DB", type = 8)),
-                                tabPanel("Pathway Enrichment", DT::dataTableOutput("pathwaysTable") %>%
-                                                               withSpinner(color="#3498DB", type = 8)) 
-                            )
+                                        tabPanel("Analysis",
+                                                 DT::dataTableOutput("table") %>%
+                                                 withSpinner(color="#3498DB",
+                                                             type = 8)),
+                                        tabPanel("Pathway Enrichment",
+                                                 DT::dataTableOutput("pathwaysTable") %>%
+                                                 withSpinner(color="#3498DB", type = 8)) 
+                                        )
                             
-                            ## Dropping attempt at tab functionality for now
-                            ## uiOutput("tabs") %>% withSpinner(color="#0dc5c1")
                         )
                     )),
            tabPanel("Download files",

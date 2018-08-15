@@ -336,10 +336,14 @@ server <- function(input, output, session) {
                         ids=input$table_rows_selected,
                         numTargets=input$numTargets)
     })
-    
+
+    output$pathwayOverview <- renderUI({
+        tags$script(type="text/javascript", language="javascript",
+                    src="https://reactome.org/FireworksJs/fireworks/fireworks.nocache.js")
+        tags$div(id="fireworksHolder")
+    })
     ## output$pathwaysGraph <- renderReactomeVisualizer({
     ##     print("Started output visualization")
-    ##     req(output$pathwaysTable)
     ##     print(paste("Visualizing row: ", input$pathwaysTable_rows_selected,
     ##                 sep = ""))
     ##     pathId <- pEnr()$id[input$pathwaysTable_rows_selected]
