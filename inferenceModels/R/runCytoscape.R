@@ -151,8 +151,9 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
             distinct(id, .keep_all = T)
 
         ## End Dr. Zarringhalam code
-        sigDEG <- sigDEG %>% filter(id %in% ents$id)
-        sigEnts <- ents %>% dplyr::filter((id %in% sigDEG$id), (type=="mRNA")) 
+        ents.mRNA <- ents %>% dplyr::filter(type == "mRNA")
+        sigDEG <- sigDEG %>% filter(id %in% ents.mRNA$id)
+        sigEnts <- ents.mRNA %>% dplyr::filter(id %in% sigDEG$id) 
         
         sigRels <- rels[(rels$srcuid %in% sigProt), ]
 
