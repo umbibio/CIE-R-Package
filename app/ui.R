@@ -97,10 +97,10 @@ navbarPage("CIE",
                             tabsetPanel(
                               tabPanel("Graph of Regulators", 
                                        rcytoscapejsOutput("graph") %>%
-                                         withSpinner(color="#3498DB", type=8)),
-                              tabPanel("Pathway Overview",
-                                       uiOutput("pathwayOverview") %>% 
-                                       withSpinner(color="#3498DB", type=8))
+                                         withSpinner(color="#3498DB", type=8))
+                              ## tabPanel("Pathway Overview",
+                              ##          uiOutput("pathwayOverview") %>% 
+                              ##          withSpinner(color="#3498DB", type=8))
                               
                                        ## tags$div(id = "fireworksHolder"),
                                        ## reactomeVisualizerOutput("pathwaysGraph")

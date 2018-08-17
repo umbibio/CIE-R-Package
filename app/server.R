@@ -131,8 +131,16 @@ server <- function(input, output, session) {
 
     ## Get degs
     degs <- eventReactive({input$run}, {
-        degs <- read.table(input$degFiles$datapath, header=T, sep="\t")
-        degs
+        sysStats <- system2("mpstat", stdout=TRUE)
+        usedPrcnt <- strsplit(sysStats[4], split=" ")
+        usedPrcnt <- as.numeric(usedPrcnt[[1]][length(usedPrcnt[[1]])])
+        if(usedPrcnt > 50) {
+            showNotification("The server is currently busy, please wait before trying to run enrichment again", type="error")
+        }
+        else {
+            degs <- read.table(input$degFiles$datapath, header=T, sep="\t")
+            degs
+        }
     })
 
     progress <- reactiveValues()
