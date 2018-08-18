@@ -5,10 +5,10 @@ Identification of active regulatory pathways under specific molecular and enviro
 
 ## Downloading the R Package
 
-To download our R package, please install the package devtools if it is not already installed on your system.
+To download our R package, please install the package devtools if it is not already installed on your system.  
 `install.packages("devtools")`
 
-Using devtools, you can install our package directly from GitHub
+Using devtools, you can install our package directly from GitHub  
 `devtools::install_github("umbibio/CIE")`
 
 ## Data for CIE
