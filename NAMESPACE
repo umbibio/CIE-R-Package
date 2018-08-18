@@ -2,5 +2,9 @@
 
 export(createCytoGraph)
 export(filterChIPAtlas)
+export(parseChIP)
+export(parseStringKB)
+export(parseTRED)
+export(parseTRRUST)
 export(pathwayEnrichment)
 export(runCIE)
