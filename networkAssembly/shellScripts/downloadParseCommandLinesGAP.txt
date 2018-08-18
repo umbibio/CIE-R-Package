@@ -1,9 +1,0 @@
-curl "http://biocc.hrbmu.edu.cn/GPA/BrowseListAction?organism=Homo%20sapiens&gene_type=protein-coding%20gene" > experiments
-cat experiments | grep 'GPAHS' | sed s/.*\"\>// | sed s/\<.*// > ids
-cat experiments | grep -A 1 'GPAHS' | grep '<td>[a-zA-Z].*' | sed s/\<td\>// | sed s/\<.*// | sed s/[[:blank:]]//g > perturbations  
-cat experiments | sed -n '/GPAHS/{n;n;n;p;}' | sed s/\<td\>// | sed s/\<.*// | sed s/[[:blank:]]//g > method
-cat experiments | sed -n '/GPAHS/{n;n;n;n;p;}' | sed s/\<td\>// | sed s/\<.*// | sed s/[[:blank:]]//g > cellLine
-pr -mts, ids perturbations method cellLine > datasets.csv
-
-for item in `cat ids`; do touch ./DEGs/$item".txt"; curl "http://biocc.hrbmu.edu.cn/GPA/DownloadActionDiffGeneInfo?gpa_id="$item > ./DEGs/$item".txt"; done
-

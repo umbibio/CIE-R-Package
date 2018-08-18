@@ -1,5 +1,0 @@
-dependencies:
-  - name: fireworks
-    src: htmlwidgets/lib/fireworks
-    script:
-      - fireworks.nocache.js
