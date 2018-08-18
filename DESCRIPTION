@@ -1,0 +1,30 @@
+Package: CIE
+Title: Causal Inference and Directional Enrichment Methods on Biological Networks
+Version: 1.0.0.0
+Authors@R: c(person("Corey", "O'Connor", email = "corey.oconnor001@umb.edu", role = c("aut", "cre")), person("Kourosh", "Zarringhalam", email = "kourosh.zarringhalam@umb.edu", role = "aut"), person("Saman", "Farahmand", email = "saman.farahmand001@umb.edu", role = "aut"), person("Argenis", "Arriojas Maldonado", email="arriojasmaldonado001@umb.edu", role = "aut"),person("Yasaman", "Rezvani", email="yasaman.rezvani66@gmail.com", role = "aut"))
+Description: This package allows for idenfiication of causual regulators responsible for gene expression differences observed through RNA-seq.  The user provides differential gene expression data and selects a database.  Enrichment is then performed to identify the key regulators.  We also support pathway enrichment on these regulators through Reactome and visualization of these regulators.
+License: GNU General Public License, Version 3
+Encoding: UTF-8
+LazyData: true
+Depends:
+    R (>= 3.4.3),
+    QuaternaryProd,
+    fdrtool,
+    dplyr,
+    doParallel,
+    parallel,
+    multidplyr,
+    rjson,
+    rcytoscapejs,
+    RColorBrewer,
+    readr,
+    org.Hs.eg.db,
+    GenomicRanges
+Imports:
+    DT,	
+    shiny,
+    shinycssloaders,
+    shinyjs,
+    utils,
+    stringr
+RoxygenNote: 6.0.1

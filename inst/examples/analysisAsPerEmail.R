@@ -1,0 +1,167 @@
+## Conditions
+files <- list.files("../CIEdraft/", "edgeR.txt")
+dges <- lapply(paste("../CIEdraft/", files, sep=""), function(x) {
+    read.table(x, header=T, sep="\t") } )
+
+names <- strsplit(files, "\\.")
+names(dges) <- lapply(names, function(x) {x[1]})
+
+## Analyses to run
+## 1) StringDB, using Quaternary Method
+enrichmentST1 <- runCIE(databaseType="string",
+                     DGEs = dges[[1]],
+                     methods ="Quaternary",
+                     useFile=TRUE, useMart=TRUE,
+                     useBHLH=TRUE,
+                     martFN="../../CIE/data/mart_human_TFs.csv",
+                     BHLHFN="../../CIE/data/BHLH_TFs.txt",
+                     targetsOfInterest= c("COL1A1", "COL1A2"),
+                     hypTabs="1",
+                     databaseDir="../../CIE/data/")
+
+## lapply(1:length(enrichmentST), function(x) {
+##     write.table(enrichmentST[[x]], paste("QuaternaryString",
+##                                        names(enrichmentST)[x], sep="")) } )
+## entsST <- read.table("../CIE/data/string.ents", sep="\t", stringsAsFactors=F)
+## entsST <- read.table("../CIE/data/string.rels", sep="\t", stringsAsFactors=F)
+## save(enrichmentST, entsST, relsST, dges)
+## createCytoGraph(enrichmentST, entsST, relsST, dges)
+
+## 2) BEL, using Quaternary method
+
+## 3) Trust, using Fisher
+enrichmentTR <- runCIE(databaseType="TRRUST",
+                     DGEs = dges[[3]],
+                     method="Fisher",
+                     useFile=TRUE, useMart=TRUE,
+                     useBHLH=TRUE,
+                     martFN="../CIE/data/mart_human_TFs.csv",
+                     BHLHFN="../CIE/data/BHLH_TFs.txt",
+                     targetsOfInterest= c("COL1A1", "COL1A2"),
+                     hypTabs="1",
+                     databaseDir="../CIE/data/")
+
+lapply(1:length(enrichmentTR), function(x) {
+    write.table(enrichmentTR[[x]], paste("FisherTRRUST",
+                                       names(enrichmentTR)[x], sep="")) } )
+## entsTR <- read.table("../CIE/data/trrust.ents", sep="\t", 
+##                      header=T, stringsAsFactors=F)
+## relsTR <- read.table("../CIE/data/trrust.rels", sep="\t", 
+##                      header=T, stringsAsFactors=F)
+## save(enrichmentTR, entsTR, relsTR, dges)
+## createCytoGraph(enrichmentTR, entsTR, relsTR, dges)
+
+## Not currently available
+
+## 4) Combined all above using Quaternary.
+
+## Then move on to ChiP and perform Fisher method using
+## 1) High stringency (1KB with cutoff score of 500 in at least one experiment)
+ChIP1min500 <- filterChIPAtlas(1, 500, "min", writeToFile = FALSE)
+enrichment1min500 <- runCIE(NULL, NULL, DGEs=dges,
+                     methods="Fisher", useFile=F,
+                     useMart=TRUE,
+                     useBHLH=TRUE,
+                     martFN="../CIE/data/mart_human_TFs.csv",
+                     BHLHFN="../CIE/data/BHLH_TFs.txt",
+                     targetsOfInterest= c("COL1A1", "COL1A2"),
+                     ents=ChIP1min500$filteredChIP.ents,
+                     rels=ChIP1min500$filteredChIP.rels, hypTabs="1")
+
+lapply(1:length(enrichment1min500), function(x) {
+   write.table(enrichment[[x]], paste("FisherChIP1min500",
+                                      names(enrichment)[x], sep=""),
+               sep="\t", row.names=F) } )
+## createCytoGraph(enrichment1min500, ChIP1min500$filteredChIP.ents,
+##                 data.frame(ChIP1min500$filteredChIP.rels), dges)
+
+## 2) Mid stringency (5 KB with cutoff of 250 in at least one experiment)
+ChIP5min250 <- filterChIPAtlas(5, 250, "min", writeToFile = FALSE)
+enrichment5min250 <- runCIE(NULL, NULL, DGEs=dges,
+                            methods="Fisher", useFile=F,
+                            useMart=TRUE,
+                            useBHLH=TRUE,
+                            martFN="../CIE/data/mart_human_TFs.csv",
+                            BHLHFN="../CIE/data/BHLH_TFs.txt",
+                            targetsOfInterest= c("COL1A1", "COL1A2"),
+                            ents=ChIP5min250$filteredChIP.ents,
+                            rels=ChIP5min250$filteredChIP.rels, hypTabs="1")
+lapply(1:length(enrichment5min250), function(x) {
+   write.table(enrichment5min250[[x]], paste("FisherChIP5min250",
+                                      names(enrichment)[x], sep=""),
+               sep="\t", row.names=F) } )
+## createCytoGraph(enrichment5min250, ChIP5min250$filteredChIP.ents,
+##                 data.frame(ChIP5min250$filteredChIP.rels), dges)
+
+## 3) Mid stringency (5 KB with cutoff of 250 on average)
+ChIP5ave250 <- filterChIPAtlas(5, 250, "average", writeToFile = FALSE)
+enrichment5ave250 <- runCIE(NULL, NULL, DGEs=dges,
+                            methods="Fisher", useFile=F,
+                            useMart=TRUE,
+                            useBHLH=TRUE,
+                            martFN="../CIE/data/mart_human_TFs.csv",
+                            BHLHFN="../CIE/data/BHLH_TFs.txt",
+                            targetsOfInterest= c("COL1A1", "COL1A2"),
+                            ents=ChIP5ave250$filteredChIP.ents,
+                            rels=ChIP5ave250$filteredChIP.rels, hypTabs="1")
+lapply(1:length(enrichment5ave250), function(x) {
+   write.table(enrichment5ave250[[x]], paste("FisherChIP5ave250",
+                                      names(enrichment)[x], sep=""),
+               sep="\t", row.names=F) } )
+
+## createCytoGraph(enrichment5ave250, ChIP5ave250$filteredChIP.ents,
+##                 data.frame(ChIP5ave250$filteredChIP.rels), dges)
+
+
+## 4) Matched cell lines (5 KB with cutoff of 250). 
+ChIP5ave250p <- filterChIPAtlas(5, 250, "average", cellLineType="prostate",
+                                writeToFile = FALSE)
+enrichment5ave250p <- runCIE(NULL, NULL, DGEs=dges,
+                             methods="Fisher", useFile=F,
+                             useMart=TRUE,
+                             useBHLH=TRUE,
+                             martFN="../CIE/data/mart_human_TFs.csv",
+                             BHLHFN="../CIE/data/BHLH_TFs.txt",
+                             targetsOfInterest= c("COL1A1", "COL1A2"),
+                             ents=ChIP5ave250p$filteredChIP.ents,
+                             rels=ChIP5ave250p$filteredChIP.rels, hypTabs="1")
+lapply(1:length(enrichment5ave250p), function(x) {
+   write.table(enrichment5ave250p[[x]], paste("FisherChIP5ave250p",
+                                      names(enrichment)[x], sep=""),
+               sep="\t", row.names=F) } )
+
+## createCytoGraph(enrichment5ave250p, ChIP5ave250p$filteredChIP.ents,
+##                 data.frame(ChIP5ave250p$filteredChIP.rels), dges)
+
+## Another analysis, this time on my own idea
+ChIP1autoP <- filterChIPAtlas(1, NULL, "auto", cellLineType="prostate",
+                              writeToFile = FALSE, databaseDir="../CIEdraft/")
+enrichment1autoP <- runCIE(NULL, NULL, DGEs = dges,
+                           methods = "Fisher", useFile=F,
+                           useMart=TRUE,
+                           useBHLH=TRUE,
+                           martFN="../CIE/data/mart_human_TFs.csv",
+                           BHLHFN="../CIE/data/BHLH_TFs.txt",
+                           targetsOfInterest= c("COL1A1", "COL1A2"),
+                           ents=ChIP1autoP$filteredChIP.ents,
+                           rels=ChIP1autoP$filteredChIP.rels,
+                           hypTabs = "1",
+                           databaseDir="../CIE/data/")
+createCytoGraph(enrichment1autoP, ChIP1autoP$filteredChIP.ents, 
+                data.frame(ChIP1autoP$filteredChIP.rels), dges)
+
+lapply(1:length(enrichment1autoP), function(x) {
+    write.table(enrichment1autoP[[x]], paste("QuaternaryChIP1autoP",
+                                       names(enrichment1autoP)[x], sep=""),
+                sep="\t", row.names=F) } )
+
+
+enrichments <- list(enrichmentTR, enrichment1min500, enrichment5min250,
+                    enrichment5ave250, enrichment5ave250p, enrichment1autoP)
+names(enrichments) <- c("enrichmentTR", "enrichment1min500", "enrichment5min250",
+                        "enrichment5ave250", "enrichment5ave250p",
+                        "enrichment1autoP")
+
+top5 <- lapply(enrichments, function(x) {
+    lapply(x, function(y) {
+        y$name[1:5] } ) } )
