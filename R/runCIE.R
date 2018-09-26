@@ -358,13 +358,15 @@ pathwayEnrichment <- function(sigProtiens, numPathways=10) {
     
 }
 pathwayEnrichmentHelper <- function(sigProtiens, numPathways) {
-    write(sigProtiens, "proteins.txt")
-    analysis <- fromJSON(system(paste("curl -H 'Content-Type: text/plain' --data-binary",
-                             " @proteins.txt -X POST --url https://reactome.org/",
-                             "AnalysisService/identifiers/projection/\\?pageSize\\=",
-                             numPathways, "\\&page\\=1", sep=""), intern=TRUE,
-                             ignore.stderr=TRUE))
-    system("rm proteins.txt")
+    ## write(sigProtiens, "proteins.txt")
+    analysis <- fromJSON(system(paste("curl -H 'Content-Type: text/plain' --data-binary ",
+                                      paste(sigProtiens, collapse=","),
+                                      " --url https://reactome.org/",
+                                      "AnalysisService/identifiers/projection/\\",
+                                      "?pageSize\\=",
+                                      numPathways, "\\&page\\=1", sep=""), intern=TRUE,
+                                ignore.stderr=TRUE))
+    ## system("rm proteins.txt")
     numPaths <- length(analysis$pathways)
     tableOut <- data.frame(id = sapply(1:numPaths,
                                        function(x) {analysis$pathways[[x]]$dbId}),
@@ -390,6 +392,7 @@ pathwayEnrichmentHelper <- function(sigProtiens, numPathways) {
         dplyr::mutate(protiensFound = sapply(1:length(protiensFound),
                                              function(x) {
                                                  paste(protiensFound[[x]], collapse="; ")}))
+    tableOut
     
 }
 
