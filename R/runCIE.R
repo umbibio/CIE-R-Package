@@ -154,6 +154,10 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "TRRUST", "BEL"),
     if(length(result) == 0) {
         stop("Please make sure that your ents table contains the correct columns. They should be uid, name, id, and type. For clarification, please see our Wiki")
     }
+    if(databaseType==BEL) {
+        ents <- ents %>% dplyr::filter(type %in% c("Protein", "mRNA"))
+        rels <- rels %>% dplyr::filter(srcuid %in% ents$uid && trguid %in% ents$uid)
+    }
     relsCols <- c("uid","srcuid", "trguid", "type", "pmids", "nls")
     result2 <- sapply(relsCols, function(x) {grep(x, colnames(rels))})
     result2 <- unlist(result)
