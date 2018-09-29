@@ -154,10 +154,10 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "TRRUST", "BEL"),
     if(length(result) == 0) {
         stop("Please make sure that your ents table contains the correct columns. They should be uid, name, id, and type. For clarification, please see our Wiki")
     }
-    if(databaseType==BEL) {
-        ents <- ents %>% dplyr::filter(type %in% c("Protein", "mRNA"))
-        rels <- rels %>% dplyr::filter(srcuid %in% ents$uid && trguid %in% ents$uid)
-    }
+    ## if(databaseType == "BEL") {
+    ##     ents <- ents[ents$type %in% c("Protein", "mRNA"),]
+    ##     rels <- rels[(rels$srcuid %in% ents$uid & rels$trguid %in% ents$uid), ]
+    ## }
     relsCols <- c("uid","srcuid", "trguid", "type", "pmids", "nls")
     result2 <- sapply(relsCols, function(x) {grep(x, colnames(rels))})
     result2 <- unlist(result)
@@ -363,6 +363,11 @@ pathwayEnrichment <- function(sigProtiens, numPathways=10) {
 }
 pathwayEnrichmentHelper <- function(sigProtiens, numPathways) {
     ## write(sigProtiens, "proteins.txt")
+    splitProt <- strsplit(sigProtiens, " ")
+    lengthsProt <- sapply(1:length(splitProt), function(x) {
+        length(splitProt[[x]])
+    })
+    sigProtiens <- sigProtiens[lengthsProt == 1]
     analysis <- fromJSON(system(paste("curl -H 'Content-Type: text/plain' --data-binary ",
                                       paste(sigProtiens, collapse=","),
                                       " --url https://reactome.org/",
