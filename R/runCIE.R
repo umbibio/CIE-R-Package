@@ -590,7 +590,8 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
         value <- progress$getValue()
         value <- value + 4*((progress$getMax() / 10))        
         progress$set(message="Calculating p-values",
-                             value=value)
+                     value=value,
+                     detail="This can take several minutes")
     }
     
     if(method %in% c("Enrichment","Fisher")){
