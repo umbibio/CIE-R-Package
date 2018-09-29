@@ -112,7 +112,7 @@
 #' View(enrichment$Fisher$cell_line_cxcl12_tgfb_evidence_edgeR.txt)
 #' 
 
-runCIE <- function(databaseType = c("TRED", "string", "ChIP", "TRRUST"),
+runCIE <- function(databaseType = c("TRED", "string", "ChIP", "TRRUST", "BEL"),
                    filter = FALSE,
                    DGEs, p.thresh = 0.05, fc.thresh=log(1.5),
                    methods,
