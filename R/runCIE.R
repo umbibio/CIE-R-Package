@@ -154,10 +154,6 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "TRRUST", "BEL"),
     if(length(result) == 0) {
         stop("Please make sure that your ents table contains the correct columns. They should be uid, name, id, and type. For clarification, please see our Wiki")
     }
-    ## if(databaseType == "BEL") {
-    ##     ents <- ents[ents$type %in% c("Protein", "mRNA"),]
-    ##     rels <- rels[(rels$srcuid %in% ents$uid & rels$trguid %in% ents$uid), ]
-    ## }
     relsCols <- c("uid","srcuid", "trguid", "type", "pmids", "nls")
     result2 <- sapply(relsCols, function(x) {grep(x, colnames(rels))})
     result2 <- unlist(result)
@@ -377,6 +373,9 @@ pathwayEnrichmentHelper <- function(sigProtiens, numPathways) {
                                 ignore.stderr=TRUE))
     ## system("rm proteins.txt")
     numPaths <- length(analysis$pathways)
+    if(numPaths == 0) {
+        return(NA)
+    }
     tableOut <- data.frame(id = sapply(1:numPaths,
                                        function(x) {analysis$pathways[[x]]$dbId}),
                            name = sapply(1:numPaths,
