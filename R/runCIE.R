@@ -71,6 +71,8 @@
 #' text progress bar.
 #'
 #' @param progress Optional parameter, specifying a shiny progress bar to be updated.
+#'
+#' @param numCores Optional parameter, specifies number of cores
 #' 
 #' @return Either a single data frame or list of data frames, depending on the number of
 #' methods and DGEs provided, which contain the enrichment results (if a list, they are
