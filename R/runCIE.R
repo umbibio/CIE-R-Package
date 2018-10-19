@@ -3,7 +3,7 @@
 #' @description Runs inference models selected on network selected, with differentially
 #' expressed genes provided, and with methods requested.
 #' 
-#' @usage runCIE(databaseType = c("TRED", "string", "ChIP"), filter = FALSE,
+#' @usage runCIE(databaseType = c("TRED", "string", "ChIP", "TRRUST"), filter = FALSE,
 #'                               DGEs, p.thresh = 0.05, fc.thresh=log(1.5),
 #'                               methods,
 #'                               filteredDataName=NA, ents=NA, rels=NA, useFile=TRUE,
@@ -11,7 +11,7 @@
 #'                               targetsOfInterest=NA
 #'                               hypTabs= c("1", "2"), verbose=T, databaseDir = NA,
 #'                               expectProgressObject=FALSE,
-#'                               progress=NA)
+#'                               progress=NA, numCores=NA)
 #' @param databaseType Currently we only support selecting one database at a time.  Using
 #' this option and having the database automatically loaded for you only currently works
 #' if your working directory is the folder where this script exists in the package.  You
@@ -112,7 +112,7 @@
 #' View(enrichment$Fisher$cell_line_cxcl12_tgfb_evidence_edgeR.txt)
 #' 
 
-runCIE <- function(databaseType = c("TRED", "string", "ChIP", "TRRUST", "BEL"),
+runCIE <- function(databaseType = c("TRED", "string", "ChIP", "TRRUST"),
                    filter = FALSE,
                    DGEs, p.thresh = 0.05, fc.thresh=log(1.5),
                    methods,
@@ -121,7 +121,7 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "TRRUST", "BEL"),
                    targetsOfInterest=NA,
                    hypTabs= c("1", "2"), verbose=T, databaseDir = NA,
                    expectProgressObject=FALSE,
-                   progress=NA) {
+                   progress=NA, numCores=NA) {
     hypTabs = match.arg(hypTabs)
     if(useFile) {
         if(!filter & is.na(filteredDataName)) {
@@ -202,45 +202,46 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "TRRUST", "BEL"),
     }
     if(class(DGEs) == "list") {
         DGEs.E <- lapply(DGEs, function(x) {
-            processDGEs(x, ents, rels, p.thresh, fc.thresh) } )
+            processDGEs(x, ents, rels, p.thresh, fc.thresh, progress) } )
         names(DGEs.E) <- names(DGEs)
     }
     else {
-        DGEs.E <- processDGEs(DGEs, ents, rels, p.thresh, fc.thresh)
+        DGEs.E <- processDGEs(DGEs, ents, rels, p.thresh, fc.thresh, progress)
     }
     print("Running Enrichment")
     if(length(methods) > 1 & class(DGEs.E) == "list") {
         enrichment <- lapply(methods, function(x) {
             lapply(DGEs.E, function(y) {
                 runEnrichment(ents, rels, y, verbose, hypTabs, x, expectProgressObject,
-                              progress) } ) } )
+                              progress, numCores) } ) } )
         names(enrichment) <- methods
     }
     else if(length(methods) > 1 & class(DGEs.E) == "data.frame") {
         enrichment <- lapply(methods, function(x) {
-            runEnrichment(ents, rels, DGEs.E, verbose, hypTabs, x, progress)
+            runEnrichment(ents, rels, DGEs.E, verbose, hypTabs, x, progress, numCores)
         } )
         names(enrichment) <- methods
     }
     else if(length(methods) == 1 & class(DGEs.E) == "list") {
         enrichment <- lapply(DGEs.E, function(x) {
             runEnrichment(ents, rels, x, verbose, hypTabs, methods, expectProgressObject,
-                          progress) } )
+                          progress, numCores) } )
     }
     else {
         enrichment <- runEnrichment(ents, rels, DGEs.E, verbose, hypTabs,
                                     methods, expectProgressObject,
-                                    progress)
+                                    progress, numCores)
     }
     print("Complete!")
     return(enrichment)
 }
 
-runEnrichment <- function(ents, rels, DGEtable, verbose, hypTabs, method, expectProgressObject,
-                          progress) {
+runEnrichment <- function(ents, rels, DGEtable, verbose, hypTabs, method,
+                          expectProgressObject, progress, numCores) {
     if(hypTabs == 1) {
         enrichment <- generateHypTabs(ents, rels, DGEtable, verbose=verbose,
-                                      method = method, expectProgressObject, progress)
+                                      method = method, expectProgressObject, progress,
+                                      numCores)
         index <- grep("pval|pvalue|p.value|p-value|p-val|p.val", colnames(enrichment))
         index <- unlist(index)
         if(length(index) == 0) {
@@ -359,10 +360,6 @@ pathwayEnrichment <- function(sigProtiens, numPathways=10) {
 }
 pathwayEnrichmentHelper <- function(sigProtiens, numPathways) {
     ## write(sigProtiens, "proteins.txt")
-    splitProt <- strsplit(sigProtiens, " ")
-    lengthsProt <- sapply(1:length(splitProt), function(x) {
-        length(splitProt[[x]])
-    })
     sigProtiens <- sigProtiens[lengthsProt == 1]
     analysis <- fromJSON(system(paste("curl -H 'Content-Type: text/plain' --data-binary ",
                                       paste(sigProtiens, collapse=","),
@@ -374,6 +371,7 @@ pathwayEnrichmentHelper <- function(sigProtiens, numPathways) {
     ## system("rm proteins.txt")
     numPaths <- length(analysis$pathways)
     if(numPaths == 0) {
+        print("None of the significant regulators you provided were found in Reactome by that Id")
         return(NA)
     }
     tableOut <- data.frame(id = sapply(1:numPaths,
@@ -407,7 +405,7 @@ pathwayEnrichmentHelper <- function(sigProtiens, numPathways) {
 ## The following protion of code was written by Dr. Kourosh Zarringhalam, presented here
 ## with minor edits. The bulk of these edits was changing the response to input that
 ## could not be processed from quitting R to stopping function execution with a message.
-processDGEs <- function(DGEs, ents, rels, p.thresh = 0.05, fc.thresh = log(1.5)){
+processDGEs <- function(DGEs, ents, rels, p.thresh = 0.05, fc.thresh = log(1.5), progress){
   ents.mRNA = ents[which(ents$type == 'mRNA'),]
   evidence = DGEs
   pval.ind = grep('qval|q.val|q-val|q-val|P-value|P.value|pvalue|pval|Pval',
@@ -416,7 +414,7 @@ processDGEs <- function(DGEs, ents, rels, p.thresh = 0.05, fc.thresh = log(1.5))
   id.ind = grep('id|entr|Entrez', colnames(evidence), ignore.case = T)
   
   if(length(id.ind) == 0 | length(fc.ind) == 0 | length(pval.ind) == 0){
-    stop('Please make sure the expression files column names are labled as entrez, fc, pvalue')
+          stop('Please make sure the expression files column names are labled as entrez, fc, pvalue')
   }
   
   colnames(evidence)[pval.ind] <- 'pvalue'
@@ -536,9 +534,11 @@ runCRE <- function(npp, npm, npz, nmp, nmm, nmz, nrp, nrm, nrz, nzp, nzm, nzz,
 
 generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
                             method = c("Ternary","Quaternary","Enrichment","Fisher"),
-                            expectProgressObject, progress){
+                            expectProgressObject, progress, numCores){
 
-    numCores <- detectCores()
+    if(is.na(numCores)) {
+        numCores <- detectCores()
+    }
     method = match.arg(method)
     ents.mRNA = ents[which(ents$type == 'mRNA'), ]
     

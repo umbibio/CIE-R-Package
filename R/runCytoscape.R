@@ -1,7 +1,3 @@
-require(rcytoscapejs)
-require(dplyr)
-require(RColorBrewer)
-
 #' Create Graphs of significant interactions
 #'
 #' @description Creates graphs of protein-gene interactions based on enrichment analyses
@@ -207,11 +203,27 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
                             target=as.character(sigRels$trguid),
                             color = colorsEdge,
                             stringsAsFactors=FALSE)
-
+        ## nodesToJSON <- makeJSONfromDF(nodeD)
+        ## edgesToJSON <- makeJSONfromDF(edgeD) 
+        
+        ## network <- list()
         network <- createCytoscapeJsNetwork(nodeD, edgeD)
+        
         rcytoscapejs(network$nodes, network$edges, showPanzoom=FALSE)
     }
 }
+makeJSONfromDF <- function(dataFrame) {
+    tmpJSON <- sapply(1:nrow(dataFrame), function(x) {
+        tmp <- sapply(colnames(dataFrame), function(y) {
+            paste0(col, ":'", dataFrame[x, y], "'")
+        })
+        tmp <- paste(tmp, collapse= ", ")
+        paste0("{ data: { ", tmp, "} }")
+    })
+    paste(tmpJSON, collapse=", ")
+}
+        
+        
 helpFuncTopbypVal <- function(sigProtein, sigEnts, sigRels, numTargets) {
   tarRels <- sigRels %>% dplyr::filter(srcuid == sigProtein)
   targs <- tarRels$trguid
