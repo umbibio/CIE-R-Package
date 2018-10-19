@@ -4,7 +4,7 @@
 \alias{runCIE}
 \title{Run Causual Inference Enrichment}
 \usage{
-runCIE(databaseType = c("TRED", "string", "ChIP"), filter = FALSE,
+runCIE(databaseType = c("TRED", "string", "ChIP", "TRRUST"), filter = FALSE,
                               DGEs, p.thresh = 0.05, fc.thresh=log(1.5),
                               methods,
                               filteredDataName=NA, ents=NA, rels=NA, useFile=TRUE,
@@ -12,7 +12,7 @@ runCIE(databaseType = c("TRED", "string", "ChIP"), filter = FALSE,
                               targetsOfInterest=NA
                               hypTabs= c("1", "2"), verbose=T, databaseDir = NA,
                               expectProgressObject=FALSE,
-                              progress=NA)
+                              progress=NA, numCores=NA)
 }
 \arguments{
 \item{databaseType}{Currently we only support selecting one database at a time.  Using
