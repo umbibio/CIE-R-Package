@@ -69,6 +69,8 @@ text progress bar.}
 
 \item{progress}{Optional parameter, specifying a shiny progress bar to be updated.}
 
+\item{numCores}{Optional parameter, specifies number of cores}
+
 \item{fc.thres}{log(1.5) by default, used as cutoff for filtering the DGEs by their
 fold change}
 
