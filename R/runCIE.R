@@ -362,7 +362,6 @@ pathwayEnrichment <- function(sigProtiens, numPathways=10) {
 }
 pathwayEnrichmentHelper <- function(sigProtiens, numPathways) {
     ## write(sigProtiens, "proteins.txt")
-    sigProtiens <- sigProtiens[lengthsProt == 1]
     analysis <- fromJSON(system(paste("curl -H 'Content-Type: text/plain' --data-binary ",
                                       paste(sigProtiens, collapse=","),
                                       " --url https://reactome.org/",
