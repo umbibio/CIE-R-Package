@@ -161,7 +161,7 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "TRRUST"),
     result2 <- unlist(result)
     if(length(result) == 0) {
         stop("Please make sure that your ents table contains the correct columns. They should be uid, srcuid, trguid, type, pmids, and nls. For clarification, please see our Wiki")
-    }
+    }    
 
     if(useMart) {
         if(!is.na(martFN)){
@@ -204,11 +204,12 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "TRRUST"),
     }
     if(class(DGEs) == "list") {
         DGEs.E <- lapply(DGEs, function(x) {
-            processDGEs(x, ents, rels, p.thresh, fc.thresh, progress) } )
+            processDGEs(x, ents, rels, p.thresh, fc.thresh, expectProgressObject) } )
         names(DGEs.E) <- names(DGEs)
     }
     else {
-        DGEs.E <- processDGEs(DGEs, ents, rels, p.thresh, fc.thresh, progress)
+        DGEs.E <- processDGEs(DGEs, ents, rels, p.thresh, fc.thresh,
+                              expectProgressObject)
     }
     print("Running Enrichment")
     if(length(methods) > 1 & class(DGEs.E) == "list") {
@@ -406,7 +407,7 @@ pathwayEnrichmentHelper <- function(sigProtiens, numPathways) {
 ## The following protion of code was written by Dr. Kourosh Zarringhalam, presented here
 ## with minor edits. The bulk of these edits was changing the response to input that
 ## could not be processed from quitting R to stopping function execution with a message.
-processDGEs <- function(DGEs, ents, rels, p.thresh = 0.05, fc.thresh = log(1.5), progress){
+processDGEs <- function(DGEs, ents, rels, p.thresh = 0.05, fc.thresh = log(1.5), expectProgressObject){
   ents.mRNA = ents[which(ents$type == 'mRNA'),]
   evidence = DGEs
   pval.ind = grep('qval|q.val|q-val|q-val|P-value|P.value|pvalue|pval|Pval',
@@ -415,7 +416,7 @@ processDGEs <- function(DGEs, ents, rels, p.thresh = 0.05, fc.thresh = log(1.5),
   id.ind = grep('id|entr|Entrez', colnames(evidence), ignore.case = T)
   
   if(length(id.ind) == 0 | length(fc.ind) == 0 | length(pval.ind) == 0){
-          stop('Please make sure the expression files column names are labled as entrez, fc, pvalue')
+      stop('Please make sure the expression files column names are labled as entrez, fc, pvalue')
   }
   
   colnames(evidence)[pval.ind] <- 'pvalue'
@@ -428,8 +429,12 @@ processDGEs <- function(DGEs, ents, rels, p.thresh = 0.05, fc.thresh = log(1.5),
   n.e1 <- nrow(evidence)
   evidence <- evidence %>% filter(id %in% ents.mRNA$id)
   n.e2 = nrow(evidence)
+  if(n.e2 == 0) {
+      stop(paste("Please double-check to make sure the Entrez ids you have ",
+                     "provided are mRNAs in the human genome (or genome you have",
+                     "configured CIE to run with", sep = ""))
+  }
   print(paste((n.e1-n.e2), "evidence removed!"))
-
   map <- sapply(evidence$id, function(x) {
       which(ents.mRNA$id %in% x)})
   
