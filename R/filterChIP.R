@@ -188,6 +188,7 @@ writeRelsEnts <- function(ChIPdata, outFileName, writeToFile) {
     ChIP.rels <- ChIP.rels %>%
         transmute(uid = 1:nrow(ChIP.rels), srcuid = srcuid, trguid = trguid,
                   type = 'conflict', pmids = NA, nls = NA)
+    ChIP.rels  <- as.data.frame(ChIP.rels)
     if(writeToFile) {
         if(!is.na(outFileName)) {
             write.table(ChIP.ents, paste(outFileName, ".ents", sep=""),
