@@ -19,7 +19,8 @@ Depends:
     RColorBrewer,
     readr,
     org.Hs.eg.db,
-    GenomicRanges
+    GenomicRanges,
+    pbapply
 Imports:
     DT,	
     shiny,
@@ -27,4 +28,4 @@ Imports:
     shinyjs,
     utils,
     stringr
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
