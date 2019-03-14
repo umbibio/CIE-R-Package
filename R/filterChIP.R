@@ -41,6 +41,13 @@
 #'
 #' @param databaseDir The path to the folder containing cellLines.rds and chip-atlas-*kb.rds.  The
 #' function will search the current working directory if a database directory  is not provided.
+#'
+#' @param annotate Use annotations, defaults to false
+#'
+#' @param expectProgressObject optional parameter specifying if a Shiny progress
+#' bar will be passed
+#'
+#' @param progressObject optional parameter providing the Shiny progress bar
 #' 
 #' @return Two dataframes, differentiated by the suffix to their names both in a returned object
 #' and  when written to file. One, ending in .ents, is the entries from the database which passed
@@ -67,21 +74,31 @@
 #' 
 filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
                             cellLineType=NA, cellLineDiagnosis = NA,
-                            outFileName = NA, writeToFile=TRUE, databaseDir=NA) {
-    rdsFN <- paste("chip-atlas-", distance, "kb.rds", sep="")
-    if(is.na(databaseDir) & !file.exists(rdsFN)) {
-        stop(paste("Please provide a directory where the cellLines.rds file and",
+                            outFileName = NA, writeToFile=FALSE, databaseDir=NA,
+                            annotate=FALSE, expectProgressObject=FALSE,
+                            progressObject=NA) {
+    if(annotate) {
+        relsFN  <- paste0("chip-atlas-", distance, "kb-anno.rels.rds")
+    }
+    else {
+        relsFN  <- paste0("chip-atlas-", distance, "kb-collapse.rels.rds")
+    }
+    entsFN  <- paste0("chip-atlas-", distance, "kb-collapse.ents")
+    if(is.na(databaseDir) & (!file.exists(entsFN) | file.exists(relsFN))) {
+         stop(paste("Please provide a directory where the cellLines.rds file and",
                    " chip-atlas-*kb.rds files can be found or place the files in your",
                    " current working directory"))
     }
-    else if(!is.na(databaseDir)) {
-        rdsFN <- paste(databaseDir, "chip-atlas-", distance, "kb.rds", sep = "")
+    if(!is.na(databaseDir)) {
+        relsFN  <- paste0(databaseDir, relsFN)
+        entsFN  <- paste0(databaseDir, entsFN)
     }
-    if(!file.exists(rdsFN)) {
+    if(!file.exists(relsFN) | !file.exists(entsFN)) {
         stop(paste("The directory you specified either does not exist or does not contain",
                    "the required files"))
     }
-    ChIPlist <- readRDS(rdsFN)
+    rels  <- readRDS(relsFN)
+    ents  <- read.table(entsFN, header=T, sep="\t", stringsAsFactors=F)
     if(!is.na(cellLineType[1])) {
         if(!is.na(cellLineDiagnosis)) {
             cellLinesTemp <- findCellLines(cellLineType, cellLineDiagnosis, databaseDir)
@@ -97,278 +114,89 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
             cellLines <- cellLinesTemp
         }
     }
+    if(cutoffType == "average") {
+        relsTemp  <- rels %>% dplyr::filter(cellLines=="Average", score > cutoff)
+        rels  <- rels %>% dplyr::filter(srcuid %in% relsTemp$srcuid,
+                                        trguid %in% relsTemp$trguid,
+                                        cellLines != "Average")
+    }
+    else if(cutoffType == "min") {
+        rels  <- rels %>% dplyr::filter(cellLines!="Average", score > cutoff)
+    }
+    else if(cutoffType == "max") {
+        rels  <- rels %>% dplyr::filter(cellLines!="Average", score < cutoff)
+    }
+    else if(cutoffType == "automatic" || cutoffType == "auto") {
+        prot <- unique(rels$srcuid)
+        relsTemp  <- rels %>% dplyr::filter(cellLines != "Average") %>%
+            group_by(srcuid)
+        cutoffs  <- unlist(relsTemp %>%
+                           summarize(cutoff = quantile(score)[4]) %>%
+                           dplyr::select(cutoff))
+        relsOut  <- rels %>% dplyr::filter(cellLines != "Average")
+        if(!expectProgressObject) {
+            print(paste0("Fitlering rels table by fourth quantile of scores",
+                         " for each TF"))
+            rels  <- do.call(rbind, pblapply(1:length(prot), function(x) {
+                relsOut %>% dplyr::filter(score > cutoffs[x], srcuid==prot[x])    
+            }))
+        }
+        else {
+            rels  <- do.call(rbind, pblapply(1:length(prot), function(x) {
+                relsOut %>% dplyr::filter(score > cutoffs[x], srcuid==prot[x])    
+                progressObject$set(message="Filtering entries",
+                             value=(x/length(prot)))
+            }))
+        }    
+    }
+    else {
+        print("Please provide a valid cutoff type")
+    }
     if(!is.na(cellLines[1])) {
-        ChIPlist <- filterByCellLine(ChIPlist, cellLines)
+        cellLines.temp  <- cellLines
+        rels <- rels %>% dplyr::filter(cellLines %in% cellLines.temp)
     }
-    if(writeToFile==TRUE) {
-        if(!is.na(outFileName)) {
-            if(cutoffType == "average") {
-                getByAverageBS(ChIPlist, cutoff, outFileName)
-            }
-            else if(cutoffType == "min") {
-                getByMinBS(ChIPlist, cutoff, outFileName)
-            }
-            else if(cutoffType == "max") {
-                getByMaxBS(ChIPlist, cutoff, outFileName)
-            }
-            else if(cutoffType == "automatic" || cutoffType == "auto") {
-                getByAutoBS(ChIPlist, outFileName)
-            }
-            else {
-                print("Please provide a valid cutoff type")
-            }
+    print("Processing to output format")
+    ents.prot  <- ents %>% dplyr::filter(type=="Protein") %>%
+        mutate(id = NULL, type=NULL, srcName= name,
+               name=NULL)
+    ents.mRNA  <- ents %>% dplyr::filter(type=="mRNA") %>%
+        mutate(id = NULL, type=NULL, trgName =name,
+               name =NULL)
+    rels  <- rels %>% left_join(ents.prot, by=c("srcuid"="uid"))
+    rels  <- rels %>% left_join(ents.mRNA, by=c("trguid"="uid"))
+    entsNew.mRNA  <- data.frame(name=unique(rels$trgName),
+                                stringsAsFactors=FALSE)
+    entsNew.prot  <- data.frame(name=unique(rels$srcName),
+                                stringsAsFactors=FALSE)
+    entsToJoinP  <- ents %>% dplyr::filter(type=="Protein") %>% mutate(uid=NULL)
+    entsToJoinM  <- ents %>% dplyr::filter(type=="mRNA") %>% mutate(uid=NULL)
+    entsNew.prot  <-  entsNew.prot %>%
+        left_join(entsToJoinP, by=c("name"="name"))
+    entsNew.mRNA  <- entsNew.mRNA %>%
+        left_join(entsToJoinM, by=c("name"="name"))
+    ents  <- rbind(entsNew.prot, entsNew.mRNA)
+    ents  <- cbind(uid=1:nrow(ents), ents)
+    rels  <-  rels %>% dplyr::mutate(trgName=NULL, srcName=NULL)
+    if(writeToFile) {
+        if(is.na(outFileName)) {
+            write.table(ents, "ChIPfiltered.ents", row.names=FALSE, sep="\t",
+                        quote=F)
+            write.table(rels, "ChIPfiltered.rels", row.names=FALSE, sep="\t",
+                        quote=F)
         }
         else {
-            if(cutoffType == "average") {
-                getByAverageBS(ChIPlist, cutoff)
-            }
-            else if(cutoffType == "min") {
-                getByMinBS(ChIPlist, cutoff)
-            }
-            else if(cutoffType == "max") {
-                getByMaxBS(ChIPlist, cutoff)
-            }
-            else if(cutoffType == "automatic" || cutoffType == "auto") {
-                getByAutoBS(ChIPlist)
-            }
-            else {
-                print("Please provide a valid cutoff type")
-            }
+            write.table(ents, paste0(outFileName, ".ents"), row.names=FALSE,
+                        sep="\t", quote=F)
+            write.table(rels, paste0(outFileName, ".rels"), row.names=FALSE,
+                        sep="\t", quote=F)
         }
     }
     else {
-        if(cutoffType == "average") {
-            getByAverageBS(ChIPlist, cutoff, NA, FALSE)
-        }
-        else if(cutoffType == "min") {
-            getByMinBS(ChIPlist, cutoff, NA, FALSE)
-        }
-        else if(cutoffType == "max") {
-            getByMaxBS(ChIPlist, cutoff, NA, FALSE)
-        }
-        else if(cutoffType == "automatic" || cutoffType == "auto") {
-            getByAutoBS(ChIPlist, NA, FALSE)
-        }
-        else {
-            print("Please provide a valid cutoff type")
-        }   
+        list("ents"=ents, "rels"=rels)
     }
-}
-## Helper function which writes the .rels and .ents files
-writeRelsEnts <- function(ChIPdata, outFileName, writeToFile) {
-    mRNAs <- unique(ChIPdata$Target_genes)
-    TFs <- unique(ChIPdata$TF)
     
-    ChIP.ents.TF <- data.frame(name = TFs, type = Rle('Protein', length(TFs)),
-                               stringsAsFactors =F)
-    ChIP.ents.mRNA <- data.frame(name = mRNAs, type = Rle('mRNA', length(mRNAs)),
-                                 stringsAsFactors = F)
-    ChIP.ents.TF$name <- as.character(ChIP.ents.TF$name)
-    
-    XX <- AnnotationDbi::select(org.Hs.eg.db, ChIP.ents.TF$name,
-                 columns=c("SYMBOL", "ENTREZID"), keytype = "SYMBOL")
-    YY <- AnnotationDbi::select(org.Hs.eg.db, keys=as.character(ChIP.ents.mRNA$name),
-                 columns=c("SYMBOL", "ENTREZID"), keytype = "SYMBOL")
-
-    YY <- YY %>% distinct(SYMBOL, .keep_all = T)
-    ChIP.ents.TF <- left_join(ChIP.ents.TF, XX, by = c('name' = 'SYMBOL'))
-    ChIP.ents.mRNA <- left_join(ChIP.ents.mRNA, YY, by = c('name' = 'SYMBOL'))
-
-    ChIP.ents <- rbind(ChIP.ents.TF, ChIP.ents.mRNA)
-    ChIP.ents <- ChIP.ents %>% mutate(uid = 1:nrow(ChIP.ents)) %>%
-        transmute(uid = uid, name = name, id = ENTREZID, type = type)
-
-    ChIP.ents.TF <- ChIP.ents %>% filter(type == 'Protein')
-    ChIP.ents.mRNA <- ChIP.ents %>% filter(type == 'mRNA')
-
-    ChIP.rels <- ChIPdata %>% na.omit() %>% group_by(TF) %>%
-        mutate(srcuid = ChIP.ents.TF$uid[match(TF, ChIP.ents.TF$name)]) %>%
-        mutate(trguid = ChIP.ents.mRNA$uid[match(Target_genes, ChIP.ents.mRNA$name)]) %>%
-        ungroup()
-    ChIP.rels <- ChIP.rels %>%
-        transmute(uid = 1:nrow(ChIP.rels), srcuid = srcuid, trguid = trguid,
-                  type = 'conflict', pmids = NA, nls = NA)
-    ChIP.rels  <- as.data.frame(ChIP.rels)
-    if(writeToFile) {
-        if(!is.na(outFileName)) {
-            write.table(ChIP.ents, paste(outFileName, ".ents", sep=""),
-                        col.names=T,row.names = F, sep = '\t', quote = F)
-            write.table(ChIP.rels, paste(outFileName, ".rels", sep=""),
-                        col.names=T, row.names = F, sep = '\t', quote = F)
-        }
-        write.table(ChIP.ents, 'ChIPfilter.ents', col.names=T,
-                    row.names = F, sep = '\t', quote = F)
-        write.table(ChIP.rels, 'ChIPfilter.rels', col.names=T,
-                    row.names = F, sep = '\t', quote = F)
-    }
-    else {
-        returnData <- list(ChIP.ents, ChIP.rels)
-        names(returnData) <- c("filteredChIP.ents", "filteredChIP.rels")
-        return(returnData)
-    }
 }
-
-## Helper function which allows a vectorized call on the list of objects for selection by
-## average binding score
-getByAverageBShelper <- function(ChIPlistItem, cutoff) {
-    returnData <- data.frame(Target_genes = NA, TF = NA, stringsAsFactors = F)
-    tf <- ChIPlistItem[1,1]
-    rawData <- ChIPlistItem[,2:ncol(ChIPlistItem)]
-    returnData <- rawData %>% filter(rawData[,2] > cutoff) %>%
-        dplyr::select(Target_genes) %>%
-        mutate(TF = tf)
-    returnData <- returnData[complete.cases(returnData),]
-    returnData
-}
-
-## Function to get by average binding score
-getByAverageBS <- function(ChIPlist, cutoff, outFileName = NA, writeToFile=TRUE) {
-    ChIP <- do.call(rbind, lapply(ChIPlist, function(x) {getByAverageBShelper(x, cutoff)}))
-    if(writeToFile) {
-        writeRelsEnts(ChIP, outFileName, writeToFile)
-    }
-    else {
-        result <- writeRelsEnts(ChIP, outFileName, writeToFile)
-        return (result)
-    }
-}
-
-
-getByMinBShelper <- function(ChIPlistItem, cutoff) {
-    returnData <- data.frame(Target_genes = NA, TF = NA, stringsAsFactors = F)
-    tf <- ChIPlistItem[1,1]
-    rawData <- ChIPlistItem[,2:ncol(ChIPlistItem)]
-    if(ncol(rawData) == 3) {
-        data <- rawData %>% filter(.[[3]] > cutoff)
-    }
-    else {
-        data <- rawData[apply(rawData[,3:ncol(rawData)], 1,
-                              function(x) {any(x > cutoff)}),]
-    }
-    returnData <- data %>%
-        dplyr::select(Target_genes) %>%
-        mutate(TF = tf)
-    returnData <- returnData[complete.cases(returnData),]
-    returnData
-
-}
-
-## Function to get by average binding score,
-getByMinBS <- function(ChIPlist, cutoff, outFileName = NA, writeToFile=TRUE) {
-    ## Data frame from repository with specified average
-    ChIP <- do.call(rbind, lapply(ChIPlist, function(x) {getByMinBShelper(x, cutoff)}))
-
-    if(writeToFile) {
-        writeRelsEnts(ChIP, outFileName, writeToFile)
-    }
-    else {
-        result <- writeRelsEnts(ChIP, outFileName, writeToFile)
-        return (result)
-    }
-}
-
-## Helper function to get by max binding score
-getByMaxBShelper <- function(ChIPlistItem, cutoff) {
-    returnData <- data.frame(Target_genes = NA, TF = NA, stringsAsFactors = F)
-    tf <- ChIPlistItem[1,1]
-    rawData <- ChIPlistItem[,2:ncol(ChIPlistItem)]
-    if(ncol(rawData) == 3) {
-        data <- rawData %>% filter(.[[3]] < cutoff)
-    }
-    else {
-        data <- rawData[apply(rawData[,3:ncol(rawData)], 1,
-                              function(x) {any(x < cutoff)}),]
-    }
-    returnData <- data %>%
-        dplyr::select(Target_genes) %>%
-        mutate(TF = tf)
-    returnData <- returnData[complete.cases(returnData),]
-    returnData
-}
-
-## Function to get by average binding score,
-getByMaxBS <- function(ChIPlist, cutoff, outFileName = NA, writeToFile=TRUE) {
-    ChIP <- do.call(rbind, lapply(ChIPlist, function(x) {getByMinBShelper(x, cutoff)}))
-    if(writeToFile) {
-        writeRelsEnts(ChIP, outFileName, writeToFile)
-    }
-    else {
-        result <- writeRelsEnts(ChIP, outFileName, writeToFile)
-        return (result)
-    }
-}
-
-## Helper function to get by automatic threshold
-getByAutoBShelper <- function(ChIPlistItem) {
-    returnData <- data.frame(Target_genes = NA, TF = NA, stringsAsFactors = F)
-    tf <- ChIPlistItem[1,1]
-    rawData <- ChIPlistItem[,2:ncol(ChIPlistItem)]
-    allScores <- unlist(rawData[,3:ncol(rawData)])
-    cutoff <- quantile(allScores)[4]
-    if(ncol(rawData) == 3) {
-        data <- rawData %>% filter(.[[3]] > cutoff)
-    }
-    else {
-        data <- rawData[apply(rawData[,3:ncol(rawData)], 1,
-                              function(x) {any(x > cutoff)}),]
-    }
-    returnData <- data %>%
-        dplyr::select(Target_genes) %>%
-        mutate(TF = tf)
-    returnData <- returnData[complete.cases(returnData),]
-    returnData
-}
-
-## Function to get by an automatic threshold, calculated for each transcription factor
-getByAutoBS <- function(ChIPlist, outFileName = NA, writeToFile=TRUE) {
-    ChIP <- do.call(rbind, lapply(ChIPlist, getByAutoBShelper))
-    if(writeToFile) {
-        writeRelsEnts(ChIP, outFileName, writeToFile)
-    }
-    else {
-        result <- writeRelsEnts(ChIP, outFileName, writeToFile)
-        return(result)
-    }
-}
-
-
-## Function which helps with selecting by cell line
-filterByCellLineHelper <- function(ChIPlistItem, cellLines) {
-    if(length(cellLines) > 1) {
-        colIndices <- sapply(cellLines,
-                             function(x) {grep(x, ignore.case = T, colnames(ChIPlistItem))})
-        colIndices <- unlist(colIndices)
-        if(length(colIndices) == 0) {
-            NA
-        }
-        else {
-            colIndices <- c(1, 2, 3, colIndices)
-            returnData <- ChIPlistItem[,colIndices]
-            returnData
-        }
-    }
-    else {
-        colIndex <- grep(cellLines, ignore.case = T, colnames(ChIPlistItem))
-        if(length(colIndex) == 0) {
-            NA
-        }
-        else {
-            colIndex <- c(1, 2, 3, colIndex)
-            returnData <- ChIPlistItem[,colIndex]
-            returnData
-        }
-    }
-}
-
-## Function which returns a modified list of data frames with entries which do not have the
-## cell line removed
-filterByCellLine <- function(ChIPlist, cellLines) {
-    returnList <- lapply(ChIPlist, function(x) {
-        filterByCellLineHelper(x, cellLines) })
-    returnList <- returnList[!is.na(returnList)]
-    returnList
-}
-
 
 findCellLines <- function(cellLinePTtype, cellLineDiagnosis = NA, databaseDir) {
     rdsFN <- "cellLines.rds"
