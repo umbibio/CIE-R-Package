@@ -145,7 +145,7 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
             rels  <- do.call(rbind, pblapply(1:length(prot), function(x) {
                 relsOut %>% dplyr::filter(score > cutoffs[x], srcuid==prot[x])    
                 progressObject$set(message="Filtering entries",
-                             value=(x/length(prot)))
+                             value=((x/length(prot))/2))
             }))
         }    
     }
@@ -178,6 +178,53 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
     ents  <- rbind(entsNew.prot, entsNew.mRNA)
     ents  <- cbind(uid=1:nrow(ents), ents)
     rels  <-  rels %>% dplyr::mutate(trgName=NULL, srcName=NULL)
+    prot  <- unique(rels$srcuid)
+    if(expectProgressObject) {
+        if(cutoffType == "automatic" || cutoffType == "auto") {
+            rels  <- do.call(rbind, lapply(1:length(prot), function(x) {
+                targs  <- rels %>% dplyr::filter(srcuid==prot[x]) %>% group_by(trguid)
+                type  <- targs %>%
+                    summarize(type = ifelse((sum(type=="increase")==(0.75*length(type))),
+                                        "increase",
+                                     ifelse(sum(type=="decrease")==(0.75*length(type)),
+                                            "decrease", "conflict")),
+                              cellLinesTotal  = paste(cellLines, collapse=", "),
+                              scoreTotal  = paste(score, collapse=", "))
+                progressObject$set(message="Processing databse for enrichment",
+                                   value=((x/length(prot))/2))
+                cbind(scruid=x, as.data.frame(type))
+            }))
+        }
+        else {
+            rels  <- do.call(rbind, lapply(1:length(prot), function(x) {
+                targs  <- rels %>% dplyr::filter(srcuid==prot[x]) %>% group_by(trguid)
+                type  <- targs %>%
+                    summarize(type = ifelse((sum(type=="increase")==(0.75*length(type))),
+                                        "increase",
+                                     ifelse(sum(type=="decrease")==(0.75*length(type)),
+                                            "decrease", "conflict")),
+                              cellLinesTotal  = paste(cellLines, collapse=", "),
+                              scoreTotal  = paste(score, collapse=", "))
+                progressObject$set(message="Processing databse for enrichment",
+                                   value=(x/length(prot)))
+                cbind(scruid=x, as.data.frame(type))
+            }))
+        }
+    }
+    else {
+        rels  <- do.call(rbind, pblapply(prot, function(x) {
+            targs  <- rels %>% dplyr::filter(srcuid==x) %>% group_by(trguid)
+            type  <- targs %>%
+                summarize(type = ifelse((sum(type=="increase")==(0.5*length(type))),
+                                        "increase",
+                                 ifelse(sum(type=="decrease")==(0.5*length(type)),
+                                        "decrease", "conflict")),
+                          cellLinesTotal  = paste(cellLines, collapse=", "),
+                          scoreTotal  = paste(score, collapse=", "))
+            cbind(scruid=x, as.data.frame(type))
+        }))
+    }
+    rels  <- cbind(uid=1:nrow(rels), rels)
     if(writeToFile) {
         if(is.na(outFileName)) {
             write.table(ents, "ChIPfiltered.ents", row.names=FALSE, sep="\t",
