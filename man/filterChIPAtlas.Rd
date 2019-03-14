@@ -42,6 +42,13 @@ the environment or written to file (FALSE and TRUE, respectively.  Defaults to T
 
 \item{databaseDir}{The path to the folder containing cellLines.rds and chip-atlas-*kb.rds.  The
 function will search the current working directory if a database directory  is not provided.}
+
+\item{annotate}{Use annotations, defaults to false}
+
+\item{expectProgressObject}{optional parameter specifying if a Shiny progress
+bar will be passed}
+
+\item{progressObject}{optional parameter providing the Shiny progress bar}
 }
 \value{
 Two dataframes, differentiated by the suffix to their names both in a returned object
