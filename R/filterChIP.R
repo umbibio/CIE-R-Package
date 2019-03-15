@@ -145,7 +145,7 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
             rels  <- do.call(rbind, pblapply(1:length(prot), function(x) {
                 relsOut %>% dplyr::filter(score > cutoffs[x], srcuid==prot[x])    
                 progressObject$set(message="Filtering entries",
-                             value=((x/length(prot))/2))
+                                   value=x*((progress$getMax()/10)/2))
             }))
         }    
     }
@@ -191,7 +191,7 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
                               cellLinesTotal  = paste(cellLines, collapse=", "),
                               scoreTotal  = paste(score, collapse=", "))
                 progressObject$set(message="Processing databse for enrichment",
-                                   value=((x/length(prot))/2))
+                                   value=x*((progress$getMax()/10)/2))
                 cbind(scruid=x, as.data.frame(type))
             }))
         }
@@ -206,7 +206,7 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
                               cellLinesTotal  = paste(cellLines, collapse=", "),
                               scoreTotal  = paste(score, collapse=", "))
                 progressObject$set(message="Processing databse for enrichment",
-                                   value=(x/length(prot)))
+                                   value=x*(progress$getMax()/10))
                 cbind(scruid=x, as.data.frame(type))
             }))
         }
