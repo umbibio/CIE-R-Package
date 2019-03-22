@@ -77,7 +77,7 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
                             databaseDir=NA, tissueCorrect=FALSE) {
     if(tissueCorrect) {
         if(!is.na(cellLineType)) {
-            if(length(grep("all", cellLineType)) != 0) {
+            if(cellLineType == "all") {
                 if(!is.na(databaseDir)) {
                     relsFN  <- paste0(databaseDir, "all_tissues.rels")
                     entsFN  <- paste0(databaseDir, "ChIPfilter.ents")
