@@ -89,15 +89,15 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
                 if(writeToFile) {
                     if(is.na(outFileName)) {
                         write.table(ents, paste0("ChIP", cellLineType, ".ents"),
-                                    sep="\t", quote=F)
+                                    sep="\t", quote=F, row.names=F)
                         write.table(rels, paste0("ChIP", cellLineType, ".rels"),
-                                    sep="\t", quote=F)
+                                    sep="\t", quote=F, row.names=F)
                     }
                     else {
                         write.table(ents, paste0(outFileName, ".ents"),
-                                    sep="\t", quote=F)
+                                    sep="\t", quote=F, row.names=F)
                         write.table(rels, paste0(outFileName, ".rels"),
-                                    sep="\t", quote=F)
+                                    sep="\t", quote=F, row.names=F)
                     }
                 }
                 else {
@@ -107,6 +107,8 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
                     return(out)
                 }
             }
+        }
+        else {
             if(!is.na(databaseDir)) {
                 relsFNs  <- readRDS(paste0(databaseDir, "tissueRels.rds"))
             }
@@ -144,15 +146,15 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
                 if(writeToFile) {
                     if(is.na(outFileName)) {
                         write.table(ents, paste0("ChIP", cellLineType, ".ents"),
-                                    sep="\t", quote=F)
+                                    sep="\t", quote=F, row.names=F)
                         write.table(rels, paste0("ChIP", cellLineType, ".rels"),
-                                    sep="\t", quote=F)
+                                    sep="\t", quote=F, row.names=F)
                     }
                     else {
                         write.table(ents, paste0(outFileName, ".ents"),
-                                    sep="\t", quote=F)
+                                    sep="\t", quote=F, row.names=F)
                         write.table(rels, paste0(outFileName, ".rels"),
-                                    sep="\t", quote=F)
+                                    sep="\t", quote=F, row.names=F)
                     }
                 }
                 else {
