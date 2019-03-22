@@ -37,10 +37,16 @@
 #' the part of the file name before the extension (ex. "filename" becomes filename.rels).
 #'
 #' @param writeToFile A boolean value, determining whether the output will be returned to
-#' the environment or written to file (FALSE and TRUE, respectively.  Defaults to TRUE
+#' the environment or written to file (FALSE and TRUE, respectively.  Defaults to FALSE
 #'
 #' @param databaseDir The path to the folder containing cellLines.rds and chip-atlas-*kb.rds.  The
 #' function will search the current working directory if a database directory  is not provided.
+#'
+#' @param tissueCorrect Loads copy of ChIP atlas which corresponds to
+#' high-confidence annotation, adds directionality.  Disables all filtering
+#' functionality save for cellLineType. cellLineType must be one of all, bladder,
+#' breast, cervix, colon, eso_gas, eso_muc, eso_mus, kidney, liver, lung,
+#' prostate, salivary, stomach, thyroid, or uterus.
 #' 
 #' @return Two dataframes, differentiated by the suffix to their names both in a returned object
 #' and  when written to file. One, ending in .ents, is the entries from the database which passed
@@ -67,7 +73,97 @@
 #' 
 filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
                             cellLineType=NA, cellLineDiagnosis = NA,
-                            outFileName = NA, writeToFile=TRUE, databaseDir=NA) {
+                            outFileName = NA, writeToFile=FALSE,
+                            databaseDir=NA, tissueCorrect=FALSE) {
+    if(tissueCorrect) {
+        if(!is.na(cellLineType)) {
+            if(length(grep("all", cellLineType)) != 0) {
+                if(!is.na(databaseDir)) {
+                    relsFN  <- paste0(databaseDir, "all_tissues.rels")
+                    entsFN  <- paste0(databaseDir, "ChIPfilter.ents")
+                }
+                else {
+                    relsFN  <- "all_tissues.rels"
+                    entsFN  <- "ChIPfilter.ents"
+                }
+                if(writeToFile) {
+                    if(is.na(outFileName)) {
+                        write.table(ents, paste0("ChIP", cellLineType, ".ents"),
+                                    sep="\t", quote=F)
+                        write.table(rels, paste0("ChIP", cellLineType, ".rels"),
+                                    sep="\t", quote=F)
+                    }
+                    else {
+                        write.table(ents, paste0(outFileName, ".ents"),
+                                    sep="\t", quote=F)
+                        write.table(rels, paste0(outFileName, ".rels"),
+                                    sep="\t", quote=F)
+                    }
+                }
+                else {
+                    out  <- list(ents, rels)
+                    names(out)  <- c(paste0("ChIP", cellLineType, ".ents"),
+                                     paste0("ChIP", cellLineType, ".rels"))
+                    return(out)
+                }
+            }
+            if(!is.na(databaseDir)) {
+                relsFNs  <- readRDS(paste0(databaseDir, "tissueRels.rds"))
+            }
+            else {
+                relsFNs  <- readRDS("tissueRels.rds")
+            }
+            ind  <- grep(cellLineType, relsFNs)
+            if(length(ind) == 0) {
+                stop(paste0("Please select a valid tissue, one of:",
+                            " bladder, breast, cervix, colon, eso_gas, ",
+                            "eso_muc, eso_mus, kidney, liver, lung, prostate",
+                            ", salivary, stomach, thyroid, uterus"))
+            }
+            if(!is.na(databaseDir)) {
+                relsFN  <- paste0(databaseDir, relsFNs[ind])
+                entsFN  <- paste0(databaseDir, "ChIPfilter.ents")
+            }
+            else {
+                relsFN  <- relsFNs[ind]
+                entsFN  <- "ChIPfilter.ents"
+            }
+            if(!file.exists(relsFN) || !file.exists(entsFN)) {
+                stop(paste0("Please provide a path to the decompressed folder",
+                            " annoChIP or place the files in your working ",
+                            "directory"))
+            }
+            else {
+                rels  <- read.table(relsFN, header=T, sep="\t", stringsAsFactors=F)
+                ents  <- read.table(entsFN, header=T, sep="\t", stringsAsFactors=F)
+                ents.prot  <- ents %>%
+                    dplyr::filter(type=="Protein", uid %in% rels$srcuid)
+                ent.mRNA  <- rels %>%
+                    dplyr::filter(type=="mRNA", uid %in% rels$trguid)
+                ents  <- rbind(ents.prot, ents.mRNA)
+                if(writeToFile) {
+                    if(is.na(outFileName)) {
+                        write.table(ents, paste0("ChIP", cellLineType, ".ents"),
+                                    sep="\t", quote=F)
+                        write.table(rels, paste0("ChIP", cellLineType, ".rels"),
+                                    sep="\t", quote=F)
+                    }
+                    else {
+                        write.table(ents, paste0(outFileName, ".ents"),
+                                    sep="\t", quote=F)
+                        write.table(rels, paste0(outFileName, ".rels"),
+                                    sep="\t", quote=F)
+                    }
+                }
+                else {
+                    out  <- list(ents, rels)
+                    names(out)  <- c(paste0("ChIP", cellLineType, ".ents"),
+                                     paste0("ChIP", cellLineType, ".rels"))
+                    return(out)
+                }
+            }
+        }
+    }
     rdsFN <- paste("chip-atlas-", distance, "kb.rds", sep="")
     if(is.na(databaseDir) & !file.exists(rdsFN)) {
         stop(paste("Please provide a directory where the cellLines.rds file and",
