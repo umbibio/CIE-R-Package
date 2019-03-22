@@ -422,6 +422,8 @@ processDGEs <- function(DGEs, ents, rels, p.thresh = 0.05, fc.thresh = log(1.5),
   colnames(evidence)[pval.ind] <- 'pvalue'
   colnames(evidence)[fc.ind] <- 'foldchange'
   colnames(evidence)[id.ind] <- 'id'
+
+  evidence  <- evidence %>% dplyr::filter(!is.na(id))
   
   evidence <- evidence %>% dplyr::filter(abs(foldchange) >= fc.thresh & pvalue <= p.thresh) %>%
     transmute(id = id, val = ifelse(foldchange > 0, 1, -1)) %>% distinct(id, .keep_all = T)
@@ -432,7 +434,7 @@ processDGEs <- function(DGEs, ents, rels, p.thresh = 0.05, fc.thresh = log(1.5),
   if(n.e2 == 0) {
       stop(paste("Please double-check to make sure the Entrez ids you have ",
                      "provided are mRNAs in the human genome (or genome you have",
-                     "configured CIE to run with", sep = ""))
+                     " configured CIE to run with)", sep = ""))
   }
   print(paste((n.e1-n.e2), "evidence removed!"))
   map <- sapply(evidence$id, function(x) {
