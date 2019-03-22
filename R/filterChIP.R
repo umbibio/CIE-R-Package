@@ -138,7 +138,7 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
                 ents  <- read.table(entsFN, header=T, sep="\t", stringsAsFactors=F)
                 ents.prot  <- ents %>%
                     dplyr::filter(type=="Protein", uid %in% rels$srcuid)
-                ent.mRNA  <- rels %>%
+                ent.mRNA  <- ents %>%
                     dplyr::filter(type=="mRNA", uid %in% rels$trguid)
                 ents  <- rbind(ents.prot, ents.mRNA)
                 if(writeToFile) {
