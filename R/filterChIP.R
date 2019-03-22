@@ -86,6 +86,8 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
                     relsFN  <- "all_tissues.rels"
                     entsFN  <- "ChIPfilter.ents"
                 }
+                ents  <- read.table(entsFN, header=T, stringsAsFactors=F)
+                rels  <- read.table(relsFN, header=T, stringsAsFactors=F)
                 if(writeToFile) {
                     if(is.na(outFileName)) {
                         write.table(ents, paste0("ChIP", cellLineType, ".ents"),
