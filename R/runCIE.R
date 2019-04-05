@@ -215,13 +215,16 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "TRRUST"),
     if(length(methods) > 1 & class(DGEs.E) == "list") {
         enrichment <- lapply(methods, function(x) {
             lapply(DGEs.E, function(y) {
-                runEnrichment(ents, rels, y, verbose, hypTabs, x, expectProgressObject,
+                runEnrichment(ents, rels, y, verbose, hypTabs, x,
+                              expectProgressObject,
                               progress, numCores) } ) } )
         names(enrichment) <- methods
     }
     else if(length(methods) > 1 & class(DGEs.E) == "data.frame") {
         enrichment <- lapply(methods, function(x) {
-            runEnrichment(ents, rels, DGEs.E, verbose, hypTabs, x, progress, numCores)
+            runEnrichment(ents, rels, DGEs.E, verbose, hypTabs, x,
+                          expectProgressObject,
+                          progress, numCores)
         } )
         names(enrichment) <- methods
     }
@@ -243,8 +246,10 @@ runEnrichment <- function(ents, rels, DGEtable, verbose, hypTabs, method,
                           expectProgressObject, progress, numCores) {
     if(hypTabs == 1) {
         enrichment <- generateHypTabs(ents, rels, DGEtable, verbose=verbose,
-                                      method = method, expectProgressObject, progress,
-                                      numCores)
+                                      method = method,
+                                      expectProgressObject=expectProgressObject,
+                                      progress=progress,
+                                      numCores=numCores)
         index <- grep("pval|pvalue|p.value|p-value|p-val|p.val", colnames(enrichment))
         index <- unlist(index)
         if(length(index) == 0) {
@@ -263,7 +268,7 @@ runEnrichment <- function(ents, rels, DGEtable, verbose, hypTabs, method,
     }
     else {
         enrichment <- generateHypTabs2(ents,rels, DGEtable, verbose=verbose,
-                                       method=method)
+                                       method=method, numCores=numCores)
         index <- grep("pval|pvalue|p.value|p-value|p-val|p.val", colnames(enrichment))
         index <- unlist(index)
         if(length(index) == 0) {

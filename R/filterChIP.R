@@ -79,11 +79,11 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
         if(!is.na(cellLineType)) {
             if(cellLineType == "all") {
                 if(!is.na(databaseDir)) {
-                    relsFN  <- paste0(databaseDir, "all_tissues.rels")
+                    relsFN  <- paste0(databaseDir, "three_tissues.rels")
                     entsFN  <- paste0(databaseDir, "ChIPfilter.ents")
                 }
                 else {
-                    relsFN  <- "all_tissues.rels"
+                    relsFN  <- "three_tissues.rels"
                     entsFN  <- "ChIPfilter.ents"
                 }
                 ents  <- read.table(entsFN, header=T, stringsAsFactors=F)
