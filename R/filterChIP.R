@@ -75,7 +75,7 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
                             cellLineType=NA, cellLineDiagnosis = NA,
                             outFileName = NA, writeToFile=FALSE,
                             databaseDir=NA, tissueCorrect=FALSE) {
-    if(tissueCorrect) {
+    if(tissueCorrect==TRUE) {
         if(!is.na(cellLineType)) {
             if(cellLineType == "all") {
                 if(!is.na(databaseDir)) {
@@ -109,149 +109,151 @@ filterChIPAtlas <- function(distance, cutoff, cutoffType, cellLines = NA,
                     return(out)
                 }
             }
-        }
-        else {
-            if(!is.na(databaseDir)) {
-                relsFNs  <- readRDS(paste0(databaseDir, "tissueRels.rds"))
-            }
             else {
-                relsFNs  <- readRDS("tissueRels.rds")
-            }
-            ind  <- grep(cellLineType, relsFNs)
-            if(length(ind) == 0) {
-                stop(paste0("Please select a valid tissue, one of:",
-                            " bladder, breast, cervix, colon, eso_gas, ",
-                            "eso_muc, eso_mus, kidney, liver, lung, prostate",
-                            ", salivary, stomach, thyroid, uterus"))
-            }
-            if(!is.na(databaseDir)) {
-                relsFN  <- paste0(databaseDir, relsFNs[ind])
-                entsFN  <- paste0(databaseDir, "ChIPfilter.ents")
-            }
-            else {
-                relsFN  <- relsFNs[ind]
-                entsFN  <- "ChIPfilter.ents"
-            }
-            if(!file.exists(relsFN) || !file.exists(entsFN)) {
-                stop(paste0("Please provide a path to the decompressed folder",
-                            " annoChIP or place the files in your working ",
-                            "directory"))
-            }
-            else {
-                rels  <- read.table(relsFN, header=T, sep="\t", stringsAsFactors=F)
-                ents  <- read.table(entsFN, header=T, sep="\t", stringsAsFactors=F)
-                ents.prot  <- ents %>%
-                    dplyr::filter(type=="Protein", uid %in% rels$srcuid)
-                ents.mRNA  <- ents %>%
-                    dplyr::filter(type=="mRNA", uid %in% rels$trguid)
-                ents  <- rbind(ents.prot, ents.mRNA)
-                if(writeToFile) {
-                    if(is.na(outFileName)) {
-                        write.table(ents, paste0("ChIP", cellLineType, ".ents"),
-                                    sep="\t", quote=F, row.names=F)
-                        write.table(rels, paste0("ChIP", cellLineType, ".rels"),
-                                    sep="\t", quote=F, row.names=F)
-                    }
-                    else {
-                        write.table(ents, paste0(outFileName, ".ents"),
-                                    sep="\t", quote=F, row.names=F)
-                        write.table(rels, paste0(outFileName, ".rels"),
-                                    sep="\t", quote=F, row.names=F)
-                    }
+                if(!is.na(databaseDir)) {
+                    relsFNs  <- readRDS(paste0(databaseDir, "tissueRels.rds"))
                 }
                 else {
-                    out  <- list(ents, rels)
-                    names(out)  <- c(paste0("ChIP", cellLineType, ".ents"),
-                                     paste0("ChIP", cellLineType, ".rels"))
-                    return(out)
+                    relsFNs  <- readRDS("tissueRels.rds")
                 }
-            }
-        }
-    }
-    rdsFN <- paste("chip-atlas-", distance, "kb.rds", sep="")
-    if(is.na(databaseDir) & !file.exists(rdsFN)) {
-        stop(paste("Please provide a directory where the cellLines.rds file and",
-                   " chip-atlas-*kb.rds files can be found or place the files in your",
-                   " current working directory"))
-    }
-    else if(!is.na(databaseDir)) {
-        rdsFN <- paste(databaseDir, "chip-atlas-", distance, "kb.rds", sep = "")
-    }
-    if(!file.exists(rdsFN)) {
-        stop(paste("The directory you specified either does not exist or does not contain",
-                   "the required files"))
-    }
-    ChIPlist <- readRDS(rdsFN)
-    if(!is.na(cellLineType[1])) {
-        if(!is.na(cellLineDiagnosis)) {
-            cellLinesTemp <- findCellLines(cellLineType, cellLineDiagnosis, databaseDir)
-        }
-        else {
-            cellLinesTemp <- findCellLines(cellLineType, databaseDir=databaseDir)
-        }
-        if(!is.na(cellLines[1])) {
-            cellLines <- c(cellLinesTemp, cellLines)
-            cellLines <- unique(cellLines)
-        }
-        else {
-            cellLines <- cellLinesTemp
-        }
-    }
-    if(!is.na(cellLines[1])) {
-        ChIPlist <- filterByCellLine(ChIPlist, cellLines)
-    }
-    if(writeToFile==TRUE) {
-        if(!is.na(outFileName)) {
-            if(cutoffType == "average") {
-                getByAverageBS(ChIPlist, cutoff, outFileName)
-            }
-            else if(cutoffType == "min") {
-                getByMinBS(ChIPlist, cutoff, outFileName)
-            }
-            else if(cutoffType == "max") {
-                getByMaxBS(ChIPlist, cutoff, outFileName)
-            }
-            else if(cutoffType == "automatic" || cutoffType == "auto") {
-                getByAutoBS(ChIPlist, outFileName)
-            }
-            else {
-                print("Please provide a valid cutoff type")
-            }
-        }
-        else {
-            if(cutoffType == "average") {
-                getByAverageBS(ChIPlist, cutoff)
-            }
-            else if(cutoffType == "min") {
-                getByMinBS(ChIPlist, cutoff)
-            }
-            else if(cutoffType == "max") {
-                getByMaxBS(ChIPlist, cutoff)
-            }
-            else if(cutoffType == "automatic" || cutoffType == "auto") {
-                getByAutoBS(ChIPlist)
-            }
-            else {
-                print("Please provide a valid cutoff type")
+                ind  <- grep(cellLineType, relsFNs)
+                if(length(ind) == 0) {
+                    stop(paste0("Please select a valid tissue, one of:",
+                                " bladder, breast, cervix, colon, eso_gas, ",
+                                "eso_muc, eso_mus, kidney, liver, lung, prostate",
+                                ", salivary, stomach, thyroid, uterus"))
+                }
+                if(!is.na(databaseDir)) {
+                    relsFN  <- paste0(databaseDir, relsFNs[ind])
+                    entsFN  <- paste0(databaseDir, "ChIPfilter.ents")
+                }
+                else {
+                    relsFN  <- relsFNs[ind]
+                    entsFN  <- "ChIPfilter.ents"
+                }
+                if(!file.exists(relsFN) || !file.exists(entsFN)) {
+                    stop(paste0("Please provide a path to the decompressed folder",
+                                " annoChIP or place the files in your working ",
+                                "directory"))
+                }
+                else {
+                    rels  <- read.table(relsFN, header=T, sep="\t", stringsAsFactors=F)
+                    ents  <- read.table(entsFN, header=T, sep="\t", stringsAsFactors=F)
+                    ents.prot  <- ents %>%
+                        dplyr::filter(type=="Protein", uid %in% rels$srcuid)
+                    ents.mRNA  <- ents %>%
+                        dplyr::filter(type=="mRNA", uid %in% rels$trguid)
+                    ents  <- rbind(ents.prot, ents.mRNA)
+                    if(writeToFile) {
+                        if(is.na(outFileName)) {
+                            write.table(ents, paste0("ChIP", cellLineType, ".ents"),
+                                        sep="\t", quote=F, row.names=F)
+                            write.table(rels, paste0("ChIP", cellLineType, ".rels"),
+                                        sep="\t", quote=F, row.names=F)
+                        }
+                        else {
+                            write.table(ents, paste0(outFileName, ".ents"),
+                                        sep="\t", quote=F, row.names=F)
+                            write.table(rels, paste0(outFileName, ".rels"),
+                                        sep="\t", quote=F, row.names=F)
+                        }
+                    }
+                    else {
+                        out  <- list(ents, rels)
+                        names(out)  <- c(paste0("ChIP", cellLineType, ".ents"),
+                                         paste0("ChIP", cellLineType, ".rels"))
+                        return(out)
+                    }
+                }
             }
         }
     }
     else {
-        if(cutoffType == "average") {
-            getByAverageBS(ChIPlist, cutoff, NA, FALSE)
+        rdsFN <- paste("chip-atlas-", distance, "kb.rds", sep="")
+        if(is.na(databaseDir) & !file.exists(rdsFN)) {
+            stop(paste("Please provide a directory where the cellLines.rds file and",
+                       " chip-atlas-*kb.rds files can be found or place the files in your",
+                       " current working directory"))
         }
-        else if(cutoffType == "min") {
-            getByMinBS(ChIPlist, cutoff, NA, FALSE)
+        else if(!is.na(databaseDir)) {
+            rdsFN <- paste(databaseDir, "chip-atlas-", distance, "kb.rds", sep = "")
         }
-        else if(cutoffType == "max") {
-            getByMaxBS(ChIPlist, cutoff, NA, FALSE)
+        if(!file.exists(rdsFN)) {
+            stop(paste("The directory you specified either does not exist or does not contain",
+                       "the required files"))
         }
-        else if(cutoffType == "automatic" || cutoffType == "auto") {
-            getByAutoBS(ChIPlist, NA, FALSE)
+        ChIPlist <- readRDS(rdsFN)
+        if(!is.na(cellLineType[1])) {
+            if(!is.na(cellLineDiagnosis)) {
+                cellLinesTemp <- findCellLines(cellLineType, cellLineDiagnosis, databaseDir)
+            }
+        else {
+                cellLinesTemp <- findCellLines(cellLineType, databaseDir=databaseDir)
+            }
+            if(!is.na(cellLines[1])) {
+                cellLines <- c(cellLinesTemp, cellLines)
+                cellLines <- unique(cellLines)
+            }
+            else {
+                cellLines <- cellLinesTemp
+            }
+        }
+        if(!is.na(cellLines[1])) {
+            ChIPlist <- filterByCellLine(ChIPlist, cellLines)
+        }
+        if(writeToFile==TRUE) {
+            if(!is.na(outFileName)) {
+                if(cutoffType == "average") {
+                    getByAverageBS(ChIPlist, cutoff, outFileName)
+                }
+                else if(cutoffType == "min") {
+                    getByMinBS(ChIPlist, cutoff, outFileName)
+                }
+                else if(cutoffType == "max") {
+                    getByMaxBS(ChIPlist, cutoff, outFileName)
+                }
+                else if(cutoffType == "automatic" || cutoffType == "auto") {
+                    getByAutoBS(ChIPlist, outFileName)
+                }
+                else {
+                    print("Please provide a valid cutoff type")
+                }
+            }
+            else {
+                if(cutoffType == "average") {
+                    getByAverageBS(ChIPlist, cutoff)
+                }
+                else if(cutoffType == "min") {
+                    getByMinBS(ChIPlist, cutoff)
+                }
+                else if(cutoffType == "max") {
+                    getByMaxBS(ChIPlist, cutoff)
+                }
+                else if(cutoffType == "automatic" || cutoffType == "auto") {
+                    getByAutoBS(ChIPlist)
+                }
+                else {
+                    print("Please provide a valid cutoff type")
+                }
+            }
         }
         else {
-            print("Please provide a valid cutoff type")
-        }   
+            if(cutoffType == "average") {
+                getByAverageBS(ChIPlist, cutoff, NA, FALSE)
+            }
+            else if(cutoffType == "min") {
+                getByMinBS(ChIPlist, cutoff, NA, FALSE)
+            }
+            else if(cutoffType == "max") {
+                getByMaxBS(ChIPlist, cutoff, NA, FALSE)
+            }
+            else if(cutoffType == "automatic" || cutoffType == "auto") {
+                getByAutoBS(ChIPlist, NA, FALSE)
+            }
+            else {
+                print("Please provide a valid cutoff type")
+            }   
+        }
     }
 }
 ## Helper function which writes the .rels and .ents files
