@@ -31,7 +31,6 @@ Suggests:
 Remotes:
     bioc::3.6/QuaternaryProd,
     bioc::3.6/GenomicRanges,
-    bioc::3.6/AnnotationData#org.Hs.eg.db,
-    github::hadley/multidplyr,
+    github::hadley/multidplyr
 Maintaner: Corey O'Connor <corey.oconnor001@umb.edu>	  
 RoxygenNote: 6.1.1
