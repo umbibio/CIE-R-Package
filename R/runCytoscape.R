@@ -189,9 +189,9 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
 
         edgeType <- sigRels$type
         colorsEdge <- sapply(1:nrow(sigRels), function(x) {
-          if(edgeType[x]=="increase") { colorPal[3] }
+          if(edgeType[x]=="increase") { colorPal[9] }
           else if(edgeType[x] == "conflict") { "#8f9091" }
-          else if(edgeType[x] == "decrease") { colorPal[9] }
+          else if(edgeType[x] == "decrease") { colorPal[3] }
         } )
         nodeD <- data.frame(id=as.character(sigEnts$uid),
                             name=sigEnts$name,
