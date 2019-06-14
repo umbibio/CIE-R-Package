@@ -259,7 +259,7 @@ runEnrichment <- function(ents, rels, DGEtable, verbose, hypTabs, method,
             enrichment <- enrichment %>% arrange(.[[index]])
         }
         else {
-            index2 <-grep("up", colnames(enrichment))
+            index2 <-grep("down", colnames(enrichment))
             index3 <- grep("adj", colnames(enrichment))
             indexFinal <- index[!(index %in% index2)]
             indexFinal <- indexFinal[!(indexFinal %in% index3)]
