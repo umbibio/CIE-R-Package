@@ -1,11 +1,11 @@
 # CIE
-## Causal Inference Using Directional and Unidirectional Enrichment Analysis on Biological Networks
+## Causal Inference Engine: Directional Enrichment Analysis on Biological Networks
 
-Identification of active regulatory pathways under specific molecular and environmental perturbations is crucial for understanding cellular function. However, inferring causal regulatory mechanisms directly from differential gene expression data is very difficult and remains a central challenge in computational biology.  We present CIE, an early version of a user-friendly web-app, and a tool box which facilitate inference of casual regulatory mechanisms based on existing knowledge bases of regulator-target interactions and user-provided differential gene expression data.  
+CIE is a platform for inference of active transcriptional regulators of differential gene expression. CIE provides a user-friendly web-app and an R-package to run inference queries on casual regulatory netowrks. Several regulatory networks are provided in the platform, including a TF-gene intraction network constructed from ChIP-seq and tissue specific gene expression data, a netowrk based on STRING-DB, and curated TF-gene interaction networks such as TRRUST and TRED. The R-package provides functionality for custom networks as well. 
 
 ## Installing the R Package
 
-Installation of this package can be accomplished through devtools or remotes.  However there is one package dependency, org.Hs.eg.db, which cannot be automatically fetched.  Before installing, run the following lines of code to install this package.  To check if the package has already been installed run
+Installation of this package can be accomplished through devtools or remotes. One package dependency, org.Hs.eg.db, must be manually fetched.  Before installing, run the following lines of code to install this package.  To check if the package has already been installed run
 
 library(org.Hs.eg.db)
 
