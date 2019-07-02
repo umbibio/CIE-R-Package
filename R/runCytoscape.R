@@ -14,7 +14,7 @@
 #'
 #' @param rels The rels table used in the enrichment, must be a single data frame
 #'
-#' @param DEGs The differentially expressed gene tables, can be a single data frame
+#' @param DGEs The differentially expressed gene tables, can be a single data frame
 #' or list of data frames matching that which the pipeline was run on.
 #'
 #' @param p.thresh The p value threshold used in determining the significant
@@ -52,7 +52,7 @@
 #' createCytoGraph(enrichment, ChIP1ap$filteredChIP.ents,
 #'                 ChIP1ap$filteredChIP.rels, degs)
 
-createCytoGraph <- function(enrichment, ents, rels, DEGs, p.thresh=0.05,
+createCytoGraph <- function(enrichment, ents, rels, DGEs, p.thresh=0.05,
                             fc.thresh = log(1.5), numProt=5, ids=NA, numTargets=10) {
     print("Starting Graph Generation")
     if(length(ents[[1]]) <= 1 ||
@@ -60,20 +60,20 @@ createCytoGraph <- function(enrichment, ents, rels, DEGs, p.thresh=0.05,
         stop("Please make sure that the provied ents and rels tables are data.frames")
     }
     if(class(enrichment) == "data.frame" &&
-       class(DEGs) == "data.frame") {
+       class(DGEs) == "data.frame") {
         print("Data type detected")
-        createCytoGraphHelper(enrichment, ents, rels, DEGs, p.thresh=p.thresh,
+        createCytoGraphHelper(enrichment, ents, rels, DGEs, p.thresh=p.thresh,
                               fc.thresh = fc.thresh, numProt=numProt, ids=ids,
                               numTargets=numTargets)
     }
     else if(class(enrichment) == "list" &&
             class(enrichment[[1]]) == "list" &&
-            class(DEGs) == "list") {
+            class(DGEs) == "list") {
         print("Data type detected")
         lapply(1:length(enrichment), function(x) {
-            lapply(1:length(DEGs), function(y) {
+            lapply(1:length(DGEs), function(y) {
                 createCytoGraphHelper(enrichment = enrichment[[x]][[y]],
-                                      ents = ents, rels = rels, DEG = DEGs[[y]],
+                                      ents = ents, rels = rels, DGE = DGEs[[y]],
                                       p.thresh = p.thresh, fc.thresh = fc.thresh,
                                       method = names(enrichment)[x],
                                       condition = names(enrichment[[x]])[y],
@@ -82,28 +82,28 @@ createCytoGraph <- function(enrichment, ents, rels, DEGs, p.thresh=0.05,
     }
     else if(class(enrichment) == "list" &&
             class(enrichment[[1]]) == "data.frame" &&
-            class(DEGs) == "list") {
+            class(DGEs) == "list") {
         print("Data type detected")
         lapply(1:length(enrichment), function(x) {
             createCytoGraphHelper(enrichment = enrichment[[x]],
                                   ents = ents, rels = rels, p.thresh = p.thresh,
-                                  fc.thresh=fc.thresh, DEG= DEGs[[x]],
+                                  fc.thresh=fc.thresh, DGE= DGEs[[x]],
                                   condition=names(enrichment)[x], numProt=numProt, ids=ids,
                                   numTargets=numTargets) }  )
     }
     else if(class(enrichment) == "list" &&
             class(enrichment[[1]]) == "data.frame" &&
-            class(DEGs) == "data.frame") {
+            class(DGEs) == "data.frame") {
         print("Data type detected")
         lapply(1:length(enrichment), function(x) {
             createCytoGraphHelper(enrichment = enrichment[[x]],
                                   ents = ents, rels = rels, p.thresh = p.thresh,
-                                  fc.thresh=fc.thresh, DEG= DEGs,
+                                  fc.thresh=fc.thresh, DGE= DGEs,
                                   method=names(enrichment)[x], numProt=numProt,
                                   ids=ids, numTargets=numTargets) }  )
    }
 }
-createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
+createCytoGraphHelper <- function(enrichment, ents, rels, DGE,
                                   p.thresh, fc.thresh, method=NA,
                                   condition=NA, numProt, ids, numTargets) {
 
@@ -130,42 +130,42 @@ createCytoGraphHelper <- function(enrichment, ents, rels, DEG,
 
         ## Code written by Dr. Kourosh Zarringhalam
         pval.ind = grep('qval|q.val|q-val|q-val|P-value|P.value|pvalue|pval|Pval',
-                        colnames(DEG), ignore.case = T)
-        fc.ind = grep('fc|FC|fold|FoldChange', colnames(DEG), ignore.case = T)
-        id.ind = grep('id|entr|Entrez', colnames(DEG), ignore.case = T)
+                        colnames(DGE), ignore.case = T)
+        fc.ind = grep('fc|FC|fold|FoldChange', colnames(DGE), ignore.case = T)
+        id.ind = grep('id|entr|Entrez', colnames(DGE), ignore.case = T)
 
         if(length(id.ind) == 0 | length(fc.ind) == 0 | length(pval.ind) == 0){
             stop('Please make sure the expression files column names are labled as entrez, fc, pvalue')
         }
 
-        colnames(DEG)[pval.ind] <- 'pvalue'
-        colnames(DEG)[fc.ind] <- 'foldchange'
-        colnames(DEG)[id.ind] <- 'id'
+        colnames(DGE)[pval.ind] <- 'pvalue'
+        colnames(DGE)[fc.ind] <- 'foldchange'
+        colnames(DGE)[id.ind] <- 'id'
 
-        sigDEG <- DEG %>% filter(abs(foldchange) >= fc.thresh & pvalue <= p.thresh) %>%
+        sigDGE <- DGE %>% filter(abs(foldchange) >= fc.thresh & pvalue <= p.thresh) %>%
             transmute(id = id, val = ifelse(foldchange > 0, 1, -1), pval = pvalue) %>%
             distinct(id, .keep_all = T)
 
         ## End Dr. Zarringhalam code
         ents.mRNA <- ents %>% dplyr::filter(type == "mRNA")
-        sigDEG <- sigDEG %>% filter(id %in% ents.mRNA$id)
-        sigEnts <- ents.mRNA %>% dplyr::filter(id %in% sigDEG$id) 
+        sigDGE <- sigDGE %>% filter(id %in% ents.mRNA$id)
+        sigEnts <- ents.mRNA %>% dplyr::filter(id %in% sigDGE$id) 
         
         sigRels <- rels[(rels$srcuid %in% sigProt), ]
 
         sigEnts <- sigEnts %>%
-            dplyr::mutate(pVal = sigDEG$pval[sigDEG$id %in% sigEnts$id])
+            dplyr::mutate(pVal = sigDGE$pval[sigDGE$id %in% sigEnts$id])
 
         sigEntsTempUIDs <- lapply(sigProt, function(x) {
            helpFuncTopbypVal(x, sigEnts, sigRels, numTargets) })
 
-        sigDEG <- sigDEG %>%
-            dplyr::mutate(uid = sigEnts$uid[sigEnts$id %in% sigDEG$id])
+        sigDGE <- sigDGE %>%
+            dplyr::mutate(uid = sigEnts$uid[sigEnts$id %in% sigDGE$id])
 
         sigEntsTempUIDs <- unique(unlist(sigEntsTempUIDs))
         sigEnts <- ents[ents$uid %in% sigEntsTempUIDs,]
         sigEnts <- sigEnts %>%
-            dplyr::mutate(val = sigDEG$val[sigDEG$uid %in% sigEnts$uid])
+            dplyr::mutate(val = sigDGE$val[sigDGE$uid %in% sigEnts$uid])
 
 
 
