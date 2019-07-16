@@ -32,7 +32,12 @@
 #' q or p value.
 #'
 #' @param fc.thres log(1.5) by default, used as cutoff for filtering the DGEs by their
-#' fold change
+#' fold change.  If logFC is set to FALSE and the default value has not been altered,
+#' it will switch to 2.  Otherwise, you must specifiy an appropriate cutoff (log(x)
+#' for log fold change and x for fold change).
+#'
+#' @param logFC boolean value indicating whether the fold change you have entered is
+#' in a log scale or unaltered.  Defaults to TRUE, which means log scale is in use.
 #'
 #' @param ents Optional argument, specifies a .ents table that you have in your environment
 #' in the event that you did not wish to write the .rels or .ents tables to file
@@ -116,7 +121,7 @@
 
 runCIE <- function(databaseType = c("TRED", "string", "ChIP", "TRRUST"),
                    filter = FALSE,
-                   DGEs, p.thresh = 0.05, fc.thresh=log(1.5),
+                   DGEs, p.thresh = 0.05, fc.thresh=log(1.5), logFC=TRUE,
                    methods,
                    filteredDataName=NA, ents=NA, rels=NA, useFile=TRUE,
                    useMart=FALSE, useBHLH=FALSE, martFN=NA, BHLHFN=NA,
@@ -201,6 +206,9 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "TRRUST"),
             ents <- ents %>% dplyr::mutate(colTitle = ents$uid %in% sigRels$srcuid)
             colnames(ents)[which(colnames(ents) == "colTitle")] = colTitle
         }
+    }
+    if(!logFC & fc.thres==log(1.5)) {
+        fc.thresh=2
     }
     if(class(DGEs) == "list") {
         DGEs.E <- lapply(DGEs, function(x) {
