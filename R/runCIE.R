@@ -625,13 +625,11 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
     }
     
     if(method %in% c("Enrichment","Fisher")){
-      cluster2 <- new_cluster(numCores)
+      cluster2 <- makeCluster(numCores)
       registerDoParallel(cluster2)
-      cluster_assign(cluster2, "runCRE" = runCRE)
-      cluster_assign(cluster2, "D" = D)
-      cluster_assign(cluster2, "method" = method)
-      cluster_assign(cluster2, "QP_Pvalue" = QP_Pvalue)
-      cluster_assign(cluster2, "fisher.test" = fisher.test)
+      clusterExport(cl=cluster2, list("runCRE", "D", "method",
+                                      "QP_Pvalue", "Fisher.test"),
+                    envir=environment())
       
       D <- D %>% mutate(pval = foreach(i = 1:nrow(D), .combine = c) %dopar% {
           runCRE(D$npp[i], D$npm[i], D$npz[i], D$nmp[i], D$nmm[i], D$nmz[i],
@@ -653,12 +651,11 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
       }
     
     }else{
-      cluster2 <- new_cluster(numCores)
+      cluster2 <- parallel::makeCluster(numCores, type="PSOCK")
       registerDoParallel(cluster2)
-      cluster_assign(cluster2, "runCRE" = runCRE)
-      cluster_assign(cluster2, "D" =  D)
-      cluster_assign(cluster2, "method" = method)
-      cluster_assign(cluster2, "QP_Pvalue" = QP_Pvalue)
+      clusterExport(cl=cluster2, list("runCRE", "D", "method",
+                                      "QP_Pvalue"),
+                    envir=environment())
       
       D <- D %>% mutate(pval.up = foreach(i = 1:nrow(D), .combine = c) %dopar% {
           runCRE(D$npp[i], D$npm[i], D$npz[i], D$nmp[i], D$nmm[i], D$nmz[i],
