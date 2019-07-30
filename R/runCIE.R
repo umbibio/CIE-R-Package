@@ -31,7 +31,7 @@
 #' @param p.thresh 0.05 by default, used as a cuttoff for filtering the DGEs by their
 #' q or p value.
 #'
-#' @param fc.thres log(1.5) by default, used as cutoff for filtering the DGEs by their
+#' @param fc.thresh log(1.5) by default, used as cutoff for filtering the DGEs by their
 #' fold change.  If logFC is set to FALSE and the default value has not been altered,
 #' it will switch to 2.  Otherwise, you must specifiy an appropriate cutoff (log(x)
 #' for log fold change and x for fold change).
@@ -207,7 +207,7 @@ runCIE <- function(databaseType = c("TRED", "string", "ChIP", "TRRUST"),
             colnames(ents)[which(colnames(ents) == "colTitle")] = colTitle
         }
     }
-    if(!logFC & fc.thres==log(1.5)) {
+    if(!logFC & fc.thresh==log(1.5)) {
         fc.thresh=2
     }
     if(class(DGEs) == "list") {
