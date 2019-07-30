@@ -564,7 +564,7 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
     ents.mRNA = ents[which(ents$type == 'mRNA'), ]
     
     D <- left_join(rels, evidence, by = c('trguid' = 'uid'))
-    cluster <- create_cluster(cores=numCores, quiet=TRUE)
+    cluster <- new_cluster(numCores)
     intoGroups <- suppressWarnings(D %>% partition(srcuid, cluster=cluster))
     
     intoGroups %>%
@@ -624,7 +624,7 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
     }
     
     if(method %in% c("Enrichment","Fisher")){
-      cluster2 <- parallel::makeCluster(numCores, type="PSOCK")
+      cluster2 <- parallel::makeCluster(numCores)
       registerDoParallel(cluster2)
       cluster2 %>% cluster_assign_value("runCRE", runCRE) %>%
           cluster_assign_value("D", D) %>%
