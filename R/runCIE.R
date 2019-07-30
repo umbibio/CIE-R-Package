@@ -564,7 +564,7 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
     ents.mRNA = ents[which(ents$type == 'mRNA'), ]
     
     D <- left_join(rels, evidence, by = c('trguid' = 'uid'))
-    cluster <- create_cluster(numCores)
+    cluster <- new_cluster(numCores)
     intoGroups <- suppressWarnings(D %>% partition(srcuid, cluster=cluster))
     
     intoGroups %>%
