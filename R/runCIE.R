@@ -628,7 +628,7 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
       cluster2 <- makeCluster(numCores)
       registerDoParallel(cluster2)
       clusterExport(cl=cluster2, list("runCRE", "D", "method",
-                                      "QP_Pvalue", "Fisher.test"),
+                                      "QP_Pvalue", "fisher.test"),
                     envir=environment())
       
       D <- D %>% mutate(pval = foreach(i = 1:nrow(D), .combine = c) %dopar% {
