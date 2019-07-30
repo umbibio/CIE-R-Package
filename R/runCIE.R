@@ -627,11 +627,11 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
     if(method %in% c("Enrichment","Fisher")){
       cluster2 <- parallel::makeCluster(numCores)
       registerDoParallel(cluster2)
-      cluster_assign_value(cluster2, "runCRE" = runCRE)
-      cluster_assign_value(cluster2, "D" = D)
-      cluster_assign_value(cluster2, "method" = method)
-      cluster_assign_value(cluster2, "QP_Pvalue" = QP_Pvalue)
-      cluster_assign_value(cluster2, "fisher.test" = fisher.test)
+      cluster_assign(cluster2, "runCRE" = runCRE)
+      cluster_assign(cluster2, "D" = D)
+      cluster_assign(cluster2, "method" = method)
+      cluster_assign(cluster2, "QP_Pvalue" = QP_Pvalue)
+      cluster_assign(cluster2, "fisher.test" = fisher.test)
       
       D <- D %>% mutate(pval = foreach(i = 1:nrow(D), .combine = c) %dopar% {
           runCRE(D$npp[i], D$npm[i], D$npz[i], D$nmp[i], D$nmm[i], D$nmz[i],
