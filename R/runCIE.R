@@ -568,10 +568,10 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
     D  <- D %>% group_by(srcuid)
     intoGroups <- suppressWarnings(partition(D, cluster=cluster))
     
-    intoGroups %>%
-        cluster_assign("evidence", evidence) %>%
-        cluster_assign("D", D) %>%
-        cluster_assign("rels", rels)
+    cluster_assign(cl, evidence) 
+    cluster_assign(cl, D) 
+    cluster_assign(cl, rels)
+    
     if(!expectProgressObject) {
         pb <- txtProgressBar(min=0, max=10,
                              initial="0", char="=", width=NA,
