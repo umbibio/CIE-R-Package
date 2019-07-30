@@ -565,7 +565,7 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
     
     D <- left_join(rels, evidence, by = c('trguid' = 'uid'))
     cluster <- new_cluster(numCores)
-    intoGroups <- suppressWarnings(D %>% partition(srcuid, cluster=cluster))
+    intoGroups <- suppressWarnings(partition(D, srcuid, cluster=cluster)
     
     intoGroups %>%
         cluster_assign_value("evidence", evidence) %>%
