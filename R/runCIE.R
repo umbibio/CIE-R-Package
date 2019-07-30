@@ -625,7 +625,7 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
     }
     
     if(method %in% c("Enrichment","Fisher")){
-      cluster2 <- parallel::makeCluster(numCores)
+      cluster2 <- new_cluster(numCores)
       registerDoParallel(cluster2)
       cluster_assign(cluster2, "runCRE" = runCRE)
       cluster_assign(cluster2, "D" = D)
@@ -653,12 +653,12 @@ generateHypTabs <- function(ents, rels, evidence, verbose=TRUE,
       }
     
     }else{
-      cluster2 <- parallel::makeCluster(numCores, type="PSOCK")
+      cluster2 <- new_cluster(numCores)
       registerDoParallel(cluster2)
-      cluster2 %>% cluster_assign_value("runCRE", runCRE) %>%
-          cluster_assign_value("D", D) %>%
-          cluster_assign_value("method", method) %>%
-          cluster_assign_value("QP_Pvalue", QP_Pvalue)
+      cluster_assign(cluster2, "runCRE" = runCRE)
+      cluster_assign(cluster2, "D" =  D)
+      cluster_assign(cluster2, "method" = method)
+      cluster_assign(cluster2, "QP_Pvalue" = QP_Pvalue)
       
       D <- D %>% mutate(pval.up = foreach(i = 1:nrow(D), .combine = c) %dopar% {
           runCRE(D$npp[i], D$npm[i], D$npz[i], D$nmp[i], D$nmm[i], D$nmz[i],
