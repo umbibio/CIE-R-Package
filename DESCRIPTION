@@ -13,7 +13,7 @@ Depends:
     dplyr,
     doParallel,
     parallel,
-    multidplyr,
+    multidplyr (>= 0.0.0.9000),
     rjson,
     RColorBrewer,
     readr,
