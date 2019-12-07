@@ -4,7 +4,7 @@
 CIE is a platform for inference of active transcriptional regulators of differential gene expression. CIE provides a user-friendly web-app and an R-package to run inference queries on casual regulatory netowrks. Several regulatory networks are provided in the platform, including a TF-gene intraction network constructed from ChIP-seq and tissue specific gene expression data, a netowrk based on STRING-DB, and curated TF-gene interaction networks such as TRRUST and TRED. The R-package provides functionality for custom networks as well. 
 
 ## Citations 
-1) Farahman, S., O'Connor, C., Macoska, J., Zarringhalam, K. 'Causal Inference En\gine: A platform for directional gene set enr\ichment analysis and inference of active tran\scriptional regulators', NAR doi:  https://doi.o\rg/10.1093/nar/gkz1046
+1) Farahmand, S., O'Connor, C., Macoska, J., Zarringhalam, K. 'Causal Inference En\gine: A platform for directional gene set enr\ichment analysis and inference of active tran\scriptional regulators', NAR doi:  https://doi.o\rg/10.1093/nar/gkz1046
 
 2) Fakhry CT, Choudhary P, Gutteridge A, Sidders B, Chen P, Ziemek D, Zarringhalam, K. 'Interpreting transcriptional changes using causal graphs: new methods and their practical utility on public networks'. BMC Bioinformatics. 2016;17(1):318
 
