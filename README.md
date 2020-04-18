@@ -69,7 +69,7 @@ library(rcytoscapejs)
 ```
 
 ## Data for CIE
-Pre-processed databases depicting interactions in human cells are available [here](https://markov.math.umb.edu/app/cie).  Click the "Download files" button at the top of the page.  This will take you to a page where you can download a compressed bundle of the selected files.
+Pre-processed databases depicting interactions in human cells are available [here](https://umbibio.math.umb.edu/cie/app).  Click the "Download files" button at the top of the page.  This will take you to a page where you can download a compressed bundle of the selected files.
 
 ## Additional information
 For more information, and guidance on how to get information from databases so that CIE can analyze differential gene expression data sourced from species other than human, please visit our [Wiki](https://github.com/umbibio/CIE/wiki)
